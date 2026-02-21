@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { Menu, X, Phone } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuth } from "@/contexts/AuthContext";
 
 const navLinks = [
   { label: "Home", href: "#home" },
@@ -14,6 +16,9 @@ const navLinks = [
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { user, logout } = useAuth();
+  const location = useLocation();
+  const isHome = location.pathname === "/";
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 50);
@@ -31,9 +36,15 @@ const Navbar = () => {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 lg:h-20">
-          <a href="#home" className="font-display text-2xl font-bold tracking-tight text-primary">
-            Cafe Kaya
-          </a>
+          {isHome ? (
+            <a href="#home" className="font-display text-2xl font-bold tracking-tight text-primary">
+              Cafe Kaya
+            </a>
+          ) : (
+            <Link to="/" className="font-display text-2xl font-bold tracking-tight text-primary">
+              Cafe Kaya
+            </Link>
+          )}
 
           {/* Desktop */}
           <div className="hidden lg:flex items-center gap-8">
@@ -46,6 +57,22 @@ const Navbar = () => {
                 {link.label}
               </a>
             ))}
+            {user ? (
+              <button
+                type="button"
+                onClick={logout}
+                className="text-sm font-medium text-foreground/80 hover:text-primary transition-colors duration-200"
+              >
+                Logout
+              </button>
+            ) : (
+              <Link
+                to="/login"
+                className="text-sm font-medium text-foreground/80 hover:text-primary transition-colors duration-200"
+              >
+                Login
+              </Link>
+            )}
             <a
               href="tel:+254710767717"
               className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-5 py-2.5 rounded-full text-sm font-semibold hover:opacity-90 transition-opacity"
@@ -85,6 +112,26 @@ const Navbar = () => {
                   {link.label}
                 </a>
               ))}
+              {user ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    logout();
+                    setMobileOpen(false);
+                  }}
+                  className="block text-base font-medium text-foreground/80 hover:text-primary transition-colors"
+                >
+                  Logout
+                </button>
+              ) : (
+                <Link
+                  to="/login"
+                  onClick={() => setMobileOpen(false)}
+                  className="block text-base font-medium text-foreground/80 hover:text-primary transition-colors"
+                >
+                  Login
+                </Link>
+              )}
               <a
                 href="tel:+254710767717"
                 className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-5 py-2.5 rounded-full text-sm font-semibold"

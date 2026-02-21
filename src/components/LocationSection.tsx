@@ -1,7 +1,48 @@
+import { useMutation } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { motion } from "framer-motion";
 import { MapPin, Phone, Clock } from "lucide-react";
+import { toast } from "sonner";
+import { submitContact } from "@/lib/api";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 
-const LocationSection = () => (
+const contactSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  email: z.string().email("Invalid email"),
+  message: z.string().min(1, "Message is required"),
+});
+
+type ContactFormValues = z.infer<typeof contactSchema>;
+
+const LocationSection = () => {
+  const form = useForm<ContactFormValues>({
+    resolver: zodResolver(contactSchema),
+    defaultValues: { name: "", email: "", message: "" },
+  });
+  const mutation = useMutation({
+    mutationFn: submitContact,
+    onSuccess: () => {
+      toast.success("Message sent! We'll get back to you soon.");
+      form.reset();
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || "Failed to send message.");
+    },
+  });
+
+  return (
   <section id="contact" className="section-padding">
     <div className="max-w-7xl mx-auto">
       <motion.div
@@ -100,10 +141,69 @@ const LocationSection = () => (
               Call Now
             </a>
           </div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="pt-6 border-t border-border"
+          >
+            <h3 className="font-display text-lg font-semibold text-foreground mb-4">Send us a message</h3>
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit((data) => mutation.mutate(data))}
+                className="space-y-4"
+              >
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Your name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input type="email" placeholder="you@example.com" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="message"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Message</FormLabel>
+                      <FormControl>
+                        <Textarea placeholder="Your message..." rows={4} {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Button type="submit" disabled={mutation.isPending}>
+                  {mutation.isPending ? "Sending..." : "Send message"}
+                </Button>
+              </form>
+            </Form>
+          </motion.div>
         </motion.div>
       </div>
     </div>
   </section>
-);
+  );
+};
 
 export default LocationSection;

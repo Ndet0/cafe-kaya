@@ -1,0 +1,1 @@
+"""Cafe Kaya API application."""

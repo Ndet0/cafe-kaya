@@ -1,25 +1,16 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
-
-import heroImg from "@/assets/hero-cafe.jpg";
-import galleryCoffee from "@/assets/gallery-coffee.jpg";
-import galleryFood from "@/assets/gallery-food.jpg";
-import galleryOutdoor from "@/assets/gallery-outdoor.jpg";
-import galleryArt from "@/assets/gallery-art.jpg";
-import galleryTea from "@/assets/gallery-tea.jpg";
-
-const images = [
-  { src: heroImg, alt: "Café Interior", span: "col-span-2 row-span-2" },
-  { src: galleryCoffee, alt: "Artisan Coffee", span: "" },
-  { src: galleryFood, alt: "Healthy Food", span: "" },
-  { src: galleryOutdoor, alt: "Outdoor Seating", span: "col-span-2" },
-  { src: galleryArt, alt: "Art & Décor", span: "" },
-  { src: galleryTea, alt: "Specialty Tea", span: "" },
-];
+import { getGallery, type GalleryImageResponse } from "@/lib/api";
 
 const GallerySection = () => {
   const [selected, setSelected] = useState<string | null>(null);
+  const { data: images = [], isLoading, isError } = useQuery({
+    queryKey: ["gallery"],
+    queryFn: () => getGallery(),
+    staleTime: 60 * 1000,
+  });
 
   return (
     <section id="gallery" className="section-padding bg-muted/30">
@@ -36,33 +27,49 @@ const GallerySection = () => {
           </h2>
         </motion.div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-          {images.map((img, i) => (
-            <motion.div
-              key={img.alt}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.1 }}
-              className={`${img.span} relative group cursor-pointer overflow-hidden rounded-xl`}
-              onClick={() => setSelected(img.src)}
-            >
-              <img
-                src={img.src}
-                alt={img.alt}
-                className="w-full h-full min-h-[200px] object-cover transition-transform duration-500 group-hover:scale-110"
-              />
-              <div className="absolute inset-0 bg-kaya-brown/0 group-hover:bg-kaya-brown/30 transition-colors duration-300 flex items-end p-4">
-                <span className="text-kaya-cream font-medium text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 translate-y-2 group-hover:translate-y-0">
-                  {img.alt}
-                </span>
-              </div>
-            </motion.div>
-          ))}
-        </div>
+        {isLoading && (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="min-h-[200px] bg-muted rounded-xl animate-pulse" />
+            ))}
+          </div>
+        )}
+        {isError && (
+          <p className="text-center text-muted-foreground py-8">
+            Gallery is loading. Please check back in a moment.
+          </p>
+        )}
+        {!isLoading && !isError && images.length > 0 && (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+            {images.map((img: GalleryImageResponse, i: number) => (
+              <motion.div
+                key={img.id}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                className={`${img.span || ""} relative group cursor-pointer overflow-hidden rounded-xl`}
+                onClick={() => setSelected(img.image_url)}
+              >
+                <img
+                  src={img.image_url}
+                  alt={img.alt || "Gallery"}
+                  className="w-full h-full min-h-[200px] object-cover transition-transform duration-500 group-hover:scale-110"
+                />
+                <div className="absolute inset-0 bg-kaya-brown/0 group-hover:bg-kaya-brown/30 transition-colors duration-300 flex items-end p-4">
+                  <span className="text-kaya-cream font-medium text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 translate-y-2 group-hover:translate-y-0">
+                    {img.alt || "Image"}
+                  </span>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
+        {!isLoading && !isError && images.length === 0 && (
+          <p className="text-center text-muted-foreground py-8">No gallery images yet.</p>
+        )}
       </div>
 
-      {/* Lightbox */}
       <AnimatePresence>
         {selected && (
           <motion.div

@@ -1,0 +1,18 @@
+# Optional: run PostgreSQL locally for development.
+# Usage: docker compose up -d
+# Then: DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/cafe_kaya
+# (or create backend/.env with that) and run: alembic upgrade head && uvicorn app.main:app --reload
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: testuser
+      POSTGRES_PASSWORD: testpassword
+      POSTGRES_DB: cafe_kaya
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:

@@ -38,7 +38,7 @@ const Login = () => {
     setSubmitError(null);
     try {
       await login(values.email, values.password);
-      navigate("/");
+      navigate("/admin");
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : "Something went wrong");
     }

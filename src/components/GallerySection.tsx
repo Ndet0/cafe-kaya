@@ -3,9 +3,12 @@ import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 import { getGallery, type GalleryImageResponse } from "@/lib/api";
+import { resolveImageSrc } from "@/lib/utils";
 
 const GallerySection = () => {
   const [selected, setSelected] = useState<string | null>(null);
+  const [failedImages, setFailedImages] = useState<Record<string, true>>({});
+  const [fullscreenFailed, setFullscreenFailed] = useState(false);
   const { data: images = [], isLoading, isError } = useQuery({
     queryKey: ["gallery"],
     queryFn: () => getGallery(),
@@ -49,12 +52,16 @@ const GallerySection = () => {
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
                 className={`${img.span || ""} relative group cursor-pointer overflow-hidden rounded-xl`}
-                onClick={() => setSelected(img.image_url)}
+                onClick={() => {
+                  setFullscreenFailed(false);
+                  setSelected(resolveImageSrc(img.image_url));
+                }}
               >
                 <img
-                  src={img.image_url}
+                  src={failedImages[img.id] ? "/placeholder.svg" : resolveImageSrc(img.image_url)}
                   alt={img.alt || "Gallery"}
                   className="w-full h-full min-h-[200px] object-cover transition-transform duration-500 group-hover:scale-110"
+                  onError={() => setFailedImages((prev) => ({ ...prev, [img.id]: true }))}
                 />
                 <div className="absolute inset-0 bg-kaya-brown/0 group-hover:bg-kaya-brown/30 transition-colors duration-300 flex items-end p-4">
                   <span className="text-kaya-cream font-medium text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 translate-y-2 group-hover:translate-y-0">
@@ -89,9 +96,10 @@ const GallerySection = () => {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              src={selected}
+              src={fullscreenFailed ? "/placeholder.svg" : selected}
               alt="Gallery fullscreen"
               className="max-w-full max-h-[85vh] object-contain rounded-lg"
+              onError={() => setFullscreenFailed(true)}
             />
           </motion.div>
         )}

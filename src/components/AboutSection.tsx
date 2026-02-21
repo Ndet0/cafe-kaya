@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Leaf, Palette, Users, Heart } from "lucide-react";
-import aboutImg from "@/assets/about-cafe.jpg";
+
 
 const values = [
   { icon: Leaf, label: "Eco-Friendly", desc: "Sustainable sourcing & zero-waste practices" },
@@ -22,7 +22,7 @@ const AboutSection = () => (
           className="relative"
         >
           <div className="rounded-2xl overflow-hidden shadow-2xl">
-            <img src={aboutImg} alt="Inside Cafe Kaya" className="w-full h-[500px] object-cover" />
+            <img src="https://malistraveldiaries.wordpress.com/wp-content/uploads/2021/01/20210115_143917.jpg?w=768" alt="Inside Cafe Kaya" className="w-full h-[500px] object-cover" />
           </div>
           <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-primary/10 rounded-2xl -z-10" />
         </motion.div>

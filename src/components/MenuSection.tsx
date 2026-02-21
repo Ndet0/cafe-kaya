@@ -1,10 +1,13 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { getMenu, type MenuItemResponse } from "@/lib/api";
+import { resolveImageSrc } from "@/lib/utils";
 
 const placeholderImg = "/placeholder.svg";
 
 const MenuSection = () => {
+  const [failedImages, setFailedImages] = useState<Record<string, true>>({});
   const { data: menuItems = [], isLoading, isError } = useQuery({
     queryKey: ["menu"],
     queryFn: () => getMenu(),
@@ -54,9 +57,10 @@ const MenuSection = () => {
               >
                 <div className="h-52 overflow-hidden">
                   <img
-                    src={item.image_url || placeholderImg}
+                    src={failedImages[item.id] ? placeholderImg : resolveImageSrc(item.image_url, placeholderImg)}
                     alt={item.name}
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    onError={() => setFailedImages((prev) => ({ ...prev, [item.id]: true }))}
                   />
                 </div>
                 <div className="p-5">

@@ -1,11 +1,9 @@
 import { motion } from "framer-motion";
 import { MapPin, Phone } from "lucide-react";
-import galleryOutdoor from "@/assets/gallery-outdoor.jpg";
-
 const CTASection = () => (
   <section className="relative py-24 overflow-hidden">
     <div className="absolute inset-0">
-      <img src={galleryOutdoor} alt="Cafe Kaya outdoor" className="w-full h-full object-cover" />
+      <img src="https://uzamart.com/wp-content/uploads/2021/01/134134536_1125726031217756_2376349775520802951_o.jpg" alt="Cafe Kaya outdoor" className="w-full h-full object-cover" />
       <div className="absolute inset-0 bg-kaya-brown/75" />
     </div>
 

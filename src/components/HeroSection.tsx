@@ -1,12 +1,10 @@
 import { motion } from "framer-motion";
 import { MapPin, ChevronDown } from "lucide-react";
-import heroImg from "@/assets/hero-cafe.jpg";
-
 const HeroSection = () => (
   <section id="home" className="relative h-screen min-h-[600px] flex items-center justify-center overflow-hidden">
     {/* Background */}
     <div className="absolute inset-0">
-      <img src={heroImg} alt="Cafe Kaya interior" className="w-full h-full object-cover" />
+      <img src="https://mindtrip.ai/cdn-cgi/image/format=webp,w=720/https://tcdn.mindtrip.ai/images/105011/1g83u69.png" alt="Cafe Kaya interior" className="w-full h-full object-cover" />
       <div className="absolute inset-0 bg-gradient-to-b from-kaya-brown/70 via-kaya-brown/50 to-kaya-brown/80" />
     </div>
 

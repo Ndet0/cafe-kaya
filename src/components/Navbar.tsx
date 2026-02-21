@@ -19,6 +19,11 @@ const Navbar = () => {
   const { user, logout } = useAuth();
   const location = useLocation();
   const isHome = location.pathname === "/";
+  const transparent = isHome && !scrolled;
+
+  const linkColor = transparent
+    ? "text-white/90 hover:text-white"
+    : "text-foreground/80 hover:text-primary";
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 50);
@@ -37,11 +42,11 @@ const Navbar = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 lg:h-20">
           {isHome ? (
-            <a href="#home" className="font-display text-2xl font-bold tracking-tight text-primary">
+            <a href="#home" className={`font-display text-2xl font-bold tracking-tight ${transparent ? "text-white" : "text-primary"}`}>
               Cafe Kaya
             </a>
           ) : (
-            <Link to="/" className="font-display text-2xl font-bold tracking-tight text-primary">
+            <Link to="/" className={`font-display text-2xl font-bold tracking-tight ${transparent ? "text-white" : "text-primary"}`}>
               Cafe Kaya
             </Link>
           )}
@@ -52,23 +57,31 @@ const Navbar = () => {
               <a
                 key={link.href}
                 href={link.href}
-                className="text-sm font-medium text-foreground/80 hover:text-primary transition-colors duration-200"
+                className={`text-sm font-medium ${linkColor} transition-colors duration-200`}
               >
                 {link.label}
               </a>
             ))}
             {user ? (
-              <button
-                type="button"
-                onClick={logout}
-                className="text-sm font-medium text-foreground/80 hover:text-primary transition-colors duration-200"
-              >
-                Logout
-              </button>
+              <>
+                <Link
+                  to="/admin"
+                  className={`text-sm font-medium ${linkColor} transition-colors duration-200`}
+                >
+                  Dashboard
+                </Link>
+                <button
+                  type="button"
+                  onClick={logout}
+                  className={`text-sm font-medium ${linkColor} transition-colors duration-200`}
+                >
+                  Logout
+                </button>
+              </>
             ) : (
               <Link
                 to="/login"
-                className="text-sm font-medium text-foreground/80 hover:text-primary transition-colors duration-200"
+                className={`text-sm font-medium ${linkColor} transition-colors duration-200`}
               >
                 Login
               </Link>
@@ -85,7 +98,7 @@ const Navbar = () => {
           {/* Mobile toggle */}
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
-            className="lg:hidden text-foreground p-2"
+            className={`lg:hidden ${transparent ? "text-white" : "text-foreground"} p-2`}
           >
             {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
@@ -113,16 +126,25 @@ const Navbar = () => {
                 </a>
               ))}
               {user ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    logout();
-                    setMobileOpen(false);
-                  }}
-                  className="block text-base font-medium text-foreground/80 hover:text-primary transition-colors"
-                >
-                  Logout
-                </button>
+                <>
+                  <Link
+                    to="/admin"
+                    onClick={() => setMobileOpen(false)}
+                    className="block text-base font-medium text-foreground/80 hover:text-primary transition-colors"
+                  >
+                    Dashboard
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      logout();
+                      setMobileOpen(false);
+                    }}
+                    className="block text-base font-medium text-foreground/80 hover:text-primary transition-colors"
+                  >
+                    Logout
+                  </button>
+                </>
               ) : (
                 <Link
                   to="/login"

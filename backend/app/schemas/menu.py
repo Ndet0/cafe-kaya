@@ -1,5 +1,6 @@
 """Menu and category schemas."""
 from decimal import Decimal
+from uuid import UUID
 from pydantic import BaseModel
 
 
@@ -13,7 +14,7 @@ class CategoryCreate(CategoryBase):
 
 
 class CategoryResponse(CategoryBase):
-    id: str
+    id: UUID
 
     class Config:
         from_attributes = True
@@ -23,7 +24,7 @@ class MenuItemBase(BaseModel):
     name: str
     description: str | None = None
     price: Decimal
-    category_id: str
+    category_id: UUID
     image_url: str | None = None
     sort_order: int = 0
     is_available: bool = True
@@ -37,18 +38,18 @@ class MenuItemUpdate(BaseModel):
     name: str | None = None
     description: str | None = None
     price: Decimal | None = None
-    category_id: str | None = None
+    category_id: UUID | None = None
     image_url: str | None = None
     sort_order: int | None = None
     is_available: bool | None = None
 
 
 class MenuItemResponse(BaseModel):
-    id: str
+    id: UUID
     name: str
     description: str | None
     price: Decimal
-    category_id: str
+    category_id: UUID
     category_name: str | None = None
     image_url: str | None
     sort_order: int

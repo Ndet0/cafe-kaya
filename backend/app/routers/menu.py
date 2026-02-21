@@ -1,4 +1,5 @@
 """Menu router: categories and menu items CRUD."""
+from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -31,13 +32,13 @@ async def list_categories(db: AsyncSession = Depends(get_db)):
 
 @router.get("", response_model=list[MenuItemResponse])
 async def list_menu_items(
-    category: str | None = Query(None, description="Filter by category id"),
+    category: UUID | None = Query(None, description="Filter by category id"),
     db: AsyncSession = Depends(get_db),
 ):
     """List menu items, optionally filtered by category (public)."""
     q = select(MenuItem).where(MenuItem.is_available == True).order_by(MenuItem.sort_order, MenuItem.name)
     if category:
-        q = q.where(MenuItem.category_id == category)
+        q = q.where(MenuItem.category_id == str(category))
     q = q.options(selectinload(MenuItem.category))
     result = await db.execute(q)
     items = result.scalars().all()
@@ -59,12 +60,12 @@ async def list_menu_items(
 
 @router.get("/{item_id}", response_model=MenuItemResponse)
 async def get_menu_item(
-    item_id: str,
+    item_id: UUID,
     db: AsyncSession = Depends(get_db),
 ):
     """Get a single menu item (public)."""
     result = await db.execute(
-        select(MenuItem).where(MenuItem.id == item_id).options(selectinload(MenuItem.category))
+        select(MenuItem).where(MenuItem.id == str(item_id)).options(selectinload(MenuItem.category))
     )
     item = result.scalar_one_or_none()
     if not item:
@@ -106,14 +107,15 @@ async def create_menu_item(
     current_user: User = Depends(get_current_user),
 ):
     """Create a menu item (admin)."""
-    result = await db.execute(select(Category).where(Category.id == body.category_id))
+    cat_id = str(body.category_id)
+    result = await db.execute(select(Category).where(Category.id == cat_id))
     if not result.scalar_one_or_none():
         raise HTTPException(status_code=400, detail="Category not found")
     item = MenuItem(
         name=body.name,
         description=body.description,
         price=body.price,
-        category_id=body.category_id,
+        category_id=cat_id,
         image_url=body.image_url,
         sort_order=body.sort_order,
         is_available=body.is_available,
@@ -138,24 +140,26 @@ async def create_menu_item(
 
 @router.put("/{item_id}", response_model=MenuItemResponse)
 async def update_menu_item(
-    item_id: str,
+    item_id: UUID,
     body: MenuItemUpdate,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     """Update a menu item (admin)."""
     result = await db.execute(
-        select(MenuItem).where(MenuItem.id == item_id).options(selectinload(MenuItem.category))
+        select(MenuItem).where(MenuItem.id == str(item_id)).options(selectinload(MenuItem.category))
     )
     item = result.scalar_one_or_none()
     if not item:
         raise HTTPException(status_code=404, detail="Menu item not found")
-    for k, v in body.model_dump(exclude_unset=True).items():
-        setattr(item, k, v)
-    if body.category_id is not None:
-        r = await db.execute(select(Category).where(Category.id == body.category_id))
+    updates = body.model_dump(exclude_unset=True)
+    if "category_id" in updates and updates["category_id"] is not None:
+        updates["category_id"] = str(updates["category_id"])
+        r = await db.execute(select(Category).where(Category.id == updates["category_id"]))
         if not r.scalar_one_or_none():
             raise HTTPException(status_code=400, detail="Category not found")
+    for k, v in updates.items():
+        setattr(item, k, v)
     await db.commit()
     await db.refresh(item)
     return MenuItemResponse(
@@ -173,12 +177,12 @@ async def update_menu_item(
 
 @router.delete("/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_menu_item(
-    item_id: str,
+    item_id: UUID,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     """Delete a menu item (admin)."""
-    result = await db.execute(select(MenuItem).where(MenuItem.id == item_id))
+    result = await db.execute(select(MenuItem).where(MenuItem.id == str(item_id)))
     item = result.scalar_one_or_none()
     if not item:
         raise HTTPException(status_code=404, detail="Menu item not found")

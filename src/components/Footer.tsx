@@ -11,7 +11,7 @@ const Footer = () => (
             Organic coffee, creative atmosphere, and sustainable living in the heart of Westlands, Nairobi.
           </p>
           <div className="flex gap-4 mt-6">
-            <a href="#" className="text-kaya-cream/50 hover:text-kaya-gold transition-colors"><Instagram className="w-5 h-5" /></a>
+            <a href="https://www.instagram.com/cafekaya254/" target="_blank" rel="noopener noreferrer" className="text-kaya-cream/50 hover:text-kaya-gold transition-colors"><Instagram className="w-5 h-5" /></a>
             <a href="#" className="text-kaya-cream/50 hover:text-kaya-gold transition-colors"><Facebook className="w-5 h-5" /></a>
             <a href="#" className="text-kaya-cream/50 hover:text-kaya-gold transition-colors"><Twitter className="w-5 h-5" /></a>
           </div>

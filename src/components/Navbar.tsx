@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Menu, X, Phone } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 
 const navLinks = [
@@ -19,7 +18,7 @@ const Navbar = () => {
   const { user, logout } = useAuth();
   const location = useLocation();
   const isHome = location.pathname === "/";
-  const transparent = isHome && !scrolled;
+  const transparent = isHome && !scrolled && !mobileOpen;
 
   const linkColor = transparent
     ? "text-white/90 hover:text-white"
@@ -34,7 +33,7 @@ const Navbar = () => {
   return (
     <nav
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-        scrolled
+        scrolled || mobileOpen
           ? "bg-background/95 backdrop-blur-md shadow-sm border-b border-border"
           : "bg-transparent"
       }`}
@@ -97,6 +96,7 @@ const Navbar = () => {
 
           {/* Mobile toggle */}
           <button
+            type="button"
             onClick={() => setMobileOpen(!mobileOpen)}
             className={`lg:hidden ${transparent ? "text-white" : "text-foreground"} p-2`}
           >
@@ -106,65 +106,62 @@ const Navbar = () => {
       </div>
 
       {/* Mobile menu */}
-      <AnimatePresence>
-        {mobileOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="lg:hidden bg-background/98 backdrop-blur-lg border-b border-border overflow-hidden"
-          >
-            <div className="px-4 py-6 space-y-4">
-              {navLinks.map((link) => (
-                <a
-                  key={link.href}
-                  href={link.href}
-                  onClick={() => setMobileOpen(false)}
-                  className="block text-base font-medium text-foreground/80 hover:text-primary transition-colors"
-                >
-                  {link.label}
-                </a>
-              ))}
-              {user ? (
-                <>
-                  <Link
-                    to="/admin"
-                    onClick={() => setMobileOpen(false)}
-                    className="block text-base font-medium text-foreground/80 hover:text-primary transition-colors"
-                  >
-                    Dashboard
-                  </Link>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      logout();
-                      setMobileOpen(false);
-                    }}
-                    className="block text-base font-medium text-foreground/80 hover:text-primary transition-colors"
-                  >
-                    Logout
-                  </button>
-                </>
-              ) : (
-                <Link
-                  to="/login"
-                  onClick={() => setMobileOpen(false)}
-                  className="block text-base font-medium text-foreground/80 hover:text-primary transition-colors"
-                >
-                  Login
-                </Link>
-              )}
+      <div
+        className={`lg:hidden grid transition-[grid-template-rows,opacity] duration-300 ease-in-out ${
+          mobileOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+        }`}
+      >
+        <div className="overflow-hidden">
+          <div className="px-4 py-6 space-y-4">
+            {navLinks.map((link) => (
               <a
-                href="tel:+254710767717"
-                className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-5 py-2.5 rounded-full text-sm font-semibold"
+                key={link.href}
+                href={link.href}
+                onClick={() => setMobileOpen(false)}
+                className="block text-base font-medium text-foreground/80 hover:text-primary transition-colors"
               >
-                <Phone className="w-4 h-4" />
-                Call Now
+                {link.label}
               </a>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            ))}
+            {user ? (
+              <>
+                <Link
+                  to="/admin"
+                  onClick={() => setMobileOpen(false)}
+                  className="block text-base font-medium text-foreground/80 hover:text-primary transition-colors"
+                >
+                  Dashboard
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => {
+                    logout();
+                    setMobileOpen(false);
+                  }}
+                  className="block text-base font-medium text-foreground/80 hover:text-primary transition-colors"
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <Link
+                to="/login"
+                onClick={() => setMobileOpen(false)}
+                className="block text-base font-medium text-foreground/80 hover:text-primary transition-colors"
+              >
+                Login
+              </Link>
+            )}
+            <a
+              href="tel:+254710767717"
+              className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-5 py-2.5 rounded-full text-sm font-semibold"
+            >
+              <Phone className="w-4 h-4" />
+              Call Now
+            </a>
+          </div>
+        </div>
+      </div>
     </nav>
   );
 };

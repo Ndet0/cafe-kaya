@@ -18,7 +18,11 @@ class Settings(BaseSettings):
     debug: bool = False
 
     # Database (PostgreSQL). Must use async driver for the app.
-    database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/cafe_kaya"
+    # Uses CAFE_DATABASE_URL to avoid collisions with system-level DATABASE_URL.
+    database_url: str = Field(
+        default="postgresql+asyncpg://postgres:postgres@localhost:5432/cafe_kaya",
+        validation_alias="CAFE_DATABASE_URL",
+    )
 
     @property
     def database_url_async(self) -> str:

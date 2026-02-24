@@ -1,5 +1,12 @@
+import { vi } from "vitest";
 import { render, screen, waitFor } from "@/test/test-utils";
+import * as api from "@/lib/api";
+import { toast } from "sonner";
 import LocationSection from "../LocationSection";
+
+vi.mock("sonner", () => ({
+  toast: { success: vi.fn(), error: vi.fn() },
+}));
 
 describe("LocationSection", () => {
   it("renders the section heading", () => {
@@ -81,6 +88,18 @@ describe("LocationSection", () => {
     await user.click(screen.getByText("Send message"));
     await waitFor(() => {
       expect(screen.getByText("Send message")).toBeInTheDocument();
+    });
+  });
+
+  it("shows fallback error message when submitContact throws Error with empty message", async () => {
+    vi.spyOn(api, "submitContact").mockRejectedValueOnce(new Error(""));
+    const { user } = render(<LocationSection />);
+    await user.type(screen.getByLabelText("Name"), "Jo");
+    await user.type(screen.getByLabelText("Email"), "j@e.co");
+    await user.type(screen.getByLabelText("Message"), "Hi");
+    await user.click(screen.getByText("Send message"));
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith("Failed to send message.");
     });
   });
 });

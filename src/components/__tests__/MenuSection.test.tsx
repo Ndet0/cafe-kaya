@@ -65,4 +65,42 @@ describe("MenuSection", () => {
       fireEvent.error(images[0]);
     }
   });
+
+  it("renders items with null category_name and description, and handles empty price", async () => {
+    server.use(
+      http.get("/api/menu", () =>
+        HttpResponse.json([
+          {
+            id: "item-null",
+            name: "Mystery Item",
+            description: null,
+            price: "",
+            category_id: "cat-1",
+            category_name: null,
+            image_url: null,
+            sort_order: 0,
+            is_available: true,
+          },
+          {
+            id: "item-with-price",
+            name: "Priced Item",
+            description: undefined,
+            price: "200",
+            category_id: "cat-1",
+            category_name: "Coffee",
+            image_url: null,
+            sort_order: 1,
+            is_available: true,
+          },
+        ]),
+      ),
+    );
+    render(<MenuSection />);
+    await waitFor(() => {
+      expect(screen.getByText("Mystery Item")).toBeInTheDocument();
+    });
+    expect(screen.getByText("Menu")).toBeInTheDocument();
+    expect(screen.getByText("Priced Item")).toBeInTheDocument();
+    expect(screen.getByText("KES 200")).toBeInTheDocument();
+  });
 });

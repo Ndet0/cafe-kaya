@@ -1,6 +1,8 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router-dom";
+import { http, HttpResponse } from "msw";
+import { server } from "@/test/mocks/server";
 import AdminOverview from "../AdminOverview";
 
 function renderPage() {
@@ -72,6 +74,26 @@ describe("AdminOverview", () => {
     renderPage();
     await waitFor(() => {
       expect(screen.getByText("New")).toBeInTheDocument();
+    });
+  });
+
+  it("shows pending reviews in recent activity", async () => {
+    server.use(
+      http.get("/api/reviews/pending", () =>
+        HttpResponse.json([
+          {
+            id: "pending-1",
+            name: "Charlie",
+            text: "Great food!",
+            rating: 5,
+            created_at: "2025-02-10T14:00:00Z",
+          },
+        ]),
+      ),
+    );
+    renderPage();
+    await waitFor(() => {
+      expect(screen.getByText(/Pending review by Charlie/)).toBeInTheDocument();
     });
   });
 });

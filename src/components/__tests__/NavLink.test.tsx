@@ -2,14 +2,14 @@ import { render, screen } from "@testing-library/react";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
 import { NavLink } from "../NavLink";
 
-function renderNavLink(to: string, currentRoute: string, activeClassName?: string) {
+function renderNavLink(to: string, currentRoute: string, activeClassName?: string, pendingClassName?: string) {
   return render(
     <MemoryRouter initialEntries={[currentRoute]}>
       <Routes>
         <Route
           path="*"
           element={
-            <NavLink to={to} className="base" activeClassName={activeClassName}>
+            <NavLink to={to} className="base" activeClassName={activeClassName} pendingClassName={pendingClassName}>
               Link Text
             </NavLink>
           }

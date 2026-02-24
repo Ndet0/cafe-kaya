@@ -1,9 +1,11 @@
+import { vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Login from "../Login";
+import * as api from "@/lib/api";
 
 function renderLogin() {
   localStorage.clear();
@@ -94,6 +96,20 @@ describe("Login", () => {
     await user.click(screen.getByRole("button", { name: "Sign in" }));
     await waitFor(() => {
       expect(screen.getByText("Admin Dashboard")).toBeInTheDocument();
+    });
+  });
+
+  it("shows fallback message when login throws non-Error", async () => {
+    vi.spyOn(api, "login").mockRejectedValueOnce("string error");
+    const { user } = renderLogin();
+    await waitFor(() => {
+      expect(screen.getByLabelText("Email")).toBeInTheDocument();
+    });
+    await user.type(screen.getByLabelText("Email"), "test@example.com");
+    await user.type(screen.getByLabelText("Password"), "password");
+    await user.click(screen.getByRole("button", { name: "Sign in" }));
+    await waitFor(() => {
+      expect(screen.getByText("Something went wrong")).toBeInTheDocument();
     });
   });
 });

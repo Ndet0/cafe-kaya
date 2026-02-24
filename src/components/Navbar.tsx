@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Menu, X, Phone } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -17,6 +17,7 @@ const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user, logout } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const isHome = location.pathname === "/";
   const transparent = isHome && !scrolled && !mobileOpen;
 
@@ -71,7 +72,7 @@ const Navbar = () => {
                 </Link>
                 <button
                   type="button"
-                  onClick={logout}
+                  onClick={() => { logout(); navigate("/"); }}
                   className={`text-sm font-medium ${linkColor} transition-colors duration-200`}
                 >
                   Logout
@@ -137,6 +138,7 @@ const Navbar = () => {
                   onClick={() => {
                     logout();
                     setMobileOpen(false);
+                    navigate("/");
                   }}
                   className="block text-base font-medium text-foreground/80 hover:text-primary transition-colors"
                 >

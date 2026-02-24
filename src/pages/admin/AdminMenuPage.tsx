@@ -19,6 +19,7 @@ import {
   type MenuItemCreateInput,
 } from "@/lib/api";
 import { isValidImageSourceInput, normalizeImageReference } from "@/lib/utils";
+import { ImageUploadField } from "@/components/ImageUploadField";
 
 const emptyMenuForm: MenuItemCreateInput = {
   name: "",
@@ -195,15 +196,12 @@ const AdminMenuPage = () => {
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="item-image">Image URL</Label>
-              <Input
-                id="item-image"
-                value={menuForm.image_url ?? ""}
-                onChange={(event) => setMenuForm((prev) => ({ ...prev, image_url: event.target.value }))}
-                placeholder="https://..."
-              />
-            </div>
+            <ImageUploadField
+              id="item-image"
+              value={menuForm.image_url ?? ""}
+              onChange={(url) => setMenuForm((prev) => ({ ...prev, image_url: url }))}
+              placeholder="https://... or upload"
+            />
 
             <Button
               type="button"

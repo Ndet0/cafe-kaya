@@ -17,9 +17,12 @@ config = get_settings()
 app = FastAPI(
     title=config.app_name,
     version="1.0.0",
-    docs_url="/docs",
-    redoc_url="/redoc",
+    docs_url="/docs" if config.debug else None,
+    redoc_url="/redoc" if config.debug else None,
 )
+
+if config.jwt_secret == "change-me-in-production":
+    logger.warning("JWT_SECRET is using the default value. Set a secure secret in production!")
 
 app.add_middleware(
     CORSMiddleware,

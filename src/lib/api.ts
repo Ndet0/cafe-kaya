@@ -309,3 +309,22 @@ export function updateContactSettings(data: ContactSettingsResponse): Promise<Co
     body: JSON.stringify(data),
   });
 }
+
+// Upload (admin)
+export async function uploadImage(file: File): Promise<{ url: string }> {
+  const formData = new FormData();
+  formData.append("file", file);
+  const token = getStoredToken();
+  const res = await fetch(`${baseURL}/api/upload`, {
+    method: "POST",
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: formData,
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(typeof err.detail === "string" ? err.detail : JSON.stringify(err));
+  }
+  return res.json();
+}

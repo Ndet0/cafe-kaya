@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  frontend:
+    name: Frontend Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+      - run: npm run test:coverage
+      - run: npm run build
+
+  backend:
+    name: Backend Docker Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t cafe-kaya-api ./backend
+
+      - name: Verify container starts
+        run: |
+          docker run -d --name cafe-kaya-test \
+            -e CAFE_DATABASE_URL=postgresql+asyncpg://test:test@localhost:5432/test \
+            -e JWT_SECRET=REMOVED_JWT_SECRET \
+            cafe-kaya-api
+          sleep 3
+          docker logs cafe-kaya-test
+          docker stop cafe-kaya-test

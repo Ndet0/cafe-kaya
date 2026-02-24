@@ -14,6 +14,7 @@ import {
   type GalleryImageCreateInput,
 } from "@/lib/api";
 import { isValidImageSourceInput, normalizeImageReference } from "@/lib/utils";
+import { ImageUploadField } from "@/components/ImageUploadField";
 
 const defaultForm: GalleryImageCreateInput = {
   image_url: "",
@@ -90,15 +91,12 @@ const AdminGalleryPage = () => {
           <CardDescription>Add media to the homepage gallery module.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div className="space-y-2">
-            <Label htmlFor="gallery-image-url">Image URL</Label>
-            <Input
-              id="gallery-image-url"
-              value={form.image_url}
-              onChange={(event) => setForm((prev) => ({ ...prev, image_url: event.target.value }))}
-              placeholder="https://..."
-            />
-          </div>
+          <ImageUploadField
+            id="gallery-image-url"
+            value={form.image_url}
+            onChange={(url) => setForm((prev) => ({ ...prev, image_url: url }))}
+            placeholder="https://... or upload"
+          />
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="gallery-alt">Alt text</Label>

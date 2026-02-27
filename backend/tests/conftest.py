@@ -19,9 +19,11 @@ from sqlalchemy.ext.asyncio import (
 )
 
 # Point settings at test env before any app import
-os.environ["CAFE_DATABASE_URL"] = (
-    "postgresql+asyncpg://REMOVED_TEST_DB"
-)
+# CI workflow sets CAFE_DATABASE_URL; local dev uses docker-compose default
+if "CAFE_DATABASE_URL" not in os.environ:
+    os.environ["CAFE_DATABASE_URL"] = (
+        "postgresql+asyncpg://REMOVED_TEST_DB"
+    )
 os.environ["JWT_SECRET"] = "test-secret-key-not-for-production"
 os.environ["JWT_ALGORITHM"] = "HS256"
 # Dummy Google config so sync path runs; respx mocks the API in tests

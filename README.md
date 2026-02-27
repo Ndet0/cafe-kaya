@@ -23,6 +23,7 @@ A modern, full-stack cafe website built with React and FastAPI. Cafe Kaya delive
 - [Architecture](#architecture)
 - [Installation](#installation)
 - [Environment Variables](#environment-variables)
+- [Security](#security)
 - [API Documentation](#api-documentation)
 - [Project Structure](#project-structure)
 - [Deployment](#deployment)
@@ -206,6 +207,14 @@ The frontend will be available at `http://localhost:8080`.
 | `CLOUDINARY_CLOUD_NAME`      | Cloudinary cloud name (optional)           | `your-cloud-name`                                        |
 | `CLOUDINARY_API_KEY`         | Cloudinary API key (optional)              | `your-api-key`                                           |
 | `CLOUDINARY_API_SECRET`      | Cloudinary API secret (optional)           | `your-api-secret`                                        |
+
+---
+
+## Security
+
+- **Never commit `.env` files** — they contain secrets. Use `.env.example` as a template.
+- **Always use GitHub Secrets** for production credentials in CI/CD workflows.
+- **Never hardcode credentials** in workflow files or application code.
 
 ---
 

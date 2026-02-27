@@ -24,6 +24,9 @@ os.environ["CAFE_DATABASE_URL"] = (
 )
 os.environ["JWT_SECRET"] = "test-secret-key-not-for-production"
 os.environ["JWT_ALGORITHM"] = "HS256"
+# Dummy Google config so sync path runs; respx mocks the API in tests
+os.environ["GOOGLE_PLACE_ID"] = "test-place-id"
+os.environ["GOOGLE_PLACES_API_KEY"] = "REMOVED_GOOGLE_API_KEY"
 
 from app.db import Base, get_db  # noqa: E402
 from app.main import app as fastapi_app  # noqa: E402
@@ -74,6 +77,17 @@ def _truncate_tables():
     with engine_sync.begin() as conn:
         for table in reversed(Base.metadata.sorted_tables):
             conn.execute(table.delete())
+
+
+# ---------------------------------------------------------------------------
+# Async DB session for unit-testing services directly
+# ---------------------------------------------------------------------------
+
+@pytest.fixture
+async def async_db() -> AsyncGenerator[AsyncSession, None]:
+    """Async session for testing services that need direct DB access."""
+    async with TestAsyncSession() as session:
+        yield session
 
 
 # ---------------------------------------------------------------------------

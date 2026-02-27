@@ -33,7 +33,7 @@ const Navbar = () => {
 
   return (
     <nav
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+      className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-500 ${
         scrolled || mobileOpen
           ? "bg-background/95 backdrop-blur-md shadow-sm border-b border-border"
           : "bg-transparent"
@@ -53,15 +53,25 @@ const Navbar = () => {
 
           {/* Desktop */}
           <div className="hidden lg:flex items-center gap-8">
-            {navLinks.map((link) => (
-              <a
-                key={link.href}
-                href={link.href}
-                className={`text-sm font-medium ${linkColor} transition-colors duration-200`}
-              >
-                {link.label}
-              </a>
-            ))}
+            {navLinks.map((link) =>
+              isHome ? (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  className={`text-sm font-medium ${linkColor} transition-colors duration-200`}
+                >
+                  {link.label}
+                </a>
+              ) : (
+                <Link
+                  key={link.href}
+                  to={"/" + link.href}
+                  className={`text-sm font-medium ${linkColor} transition-colors duration-200`}
+                >
+                  {link.label}
+                </Link>
+              )
+            )}
             {user ? (
               <>
                 <Link
@@ -114,16 +124,27 @@ const Navbar = () => {
       >
         <div className="overflow-hidden">
           <div className="px-4 py-6 space-y-4">
-            {navLinks.map((link) => (
-              <a
-                key={link.href}
-                href={link.href}
-                onClick={() => setMobileOpen(false)}
-                className="block text-base font-medium text-foreground/80 hover:text-primary transition-colors"
-              >
-                {link.label}
-              </a>
-            ))}
+            {navLinks.map((link) =>
+              isHome ? (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setMobileOpen(false)}
+                  className="block text-base font-medium text-foreground/80 hover:text-primary transition-colors"
+                >
+                  {link.label}
+                </a>
+              ) : (
+                <Link
+                  key={link.href}
+                  to={"/" + link.href}
+                  onClick={() => setMobileOpen(false)}
+                  className="block text-base font-medium text-foreground/80 hover:text-primary transition-colors"
+                >
+                  {link.label}
+                </Link>
+              )
+            )}
             {user ? (
               <>
                 <Link

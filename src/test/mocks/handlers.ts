@@ -47,9 +47,30 @@ export const mockGalleryImages = [
 ];
 
 export const mockReviews = [
-  { id: "rev-1", name: "Alice", text: "Amazing coffee!", rating: 5, created_at: "2025-01-15T10:00:00Z" },
-  { id: "rev-2", name: "Bob", text: "Great atmosphere", rating: 4, created_at: "2025-01-10T08:00:00Z" },
+  {
+    id: "rev-1",
+    name: "Alice",
+    text: "Amazing coffee!",
+    rating: 5,
+    created_at: "2025-01-15T10:00:00Z",
+    source: "google",
+    profile_photo_url: "https://lh3.googleusercontent.com/a/test",
+  },
+  {
+    id: "rev-2",
+    name: "Bob",
+    text: "Great atmosphere",
+    rating: 4,
+    created_at: "2025-01-10T08:00:00Z",
+    source: "local",
+  },
 ];
+
+export const mockReviewsListResponse = {
+  rating: 4.7,
+  total_reviews: 120,
+  reviews: mockReviews,
+};
 
 export const mockRating = { average: 4.5, count: 42 };
 
@@ -142,7 +163,7 @@ export const handlers = [
   http.delete("/api/gallery/:imageId", () => new HttpResponse(null, { status: 204 })),
 
   // Reviews
-  http.get("/api/reviews", () => HttpResponse.json(mockReviews)),
+  http.get("/api/reviews", () => HttpResponse.json(mockReviewsListResponse)),
 
   http.get("/api/reviews/pending", () => HttpResponse.json([])),
 

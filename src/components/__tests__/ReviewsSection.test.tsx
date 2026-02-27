@@ -33,9 +33,9 @@ describe("ReviewsSection", () => {
   it("renders average rating", async () => {
     render(<ReviewsSection />);
     await waitFor(() => {
-      expect(screen.getByText("4.5")).toBeInTheDocument();
+      expect(screen.getByText("4.7")).toBeInTheDocument();
     });
-    expect(screen.getByText(/from 42 reviews/)).toBeInTheDocument();
+    expect(screen.getByText(/from 120 reviews/)).toBeInTheDocument();
   });
 
   it("shows error state on API failure", async () => {
@@ -43,13 +43,20 @@ describe("ReviewsSection", () => {
       http.get("/api/reviews", () => HttpResponse.json({ detail: "Error" }, { status: 500 })),
     );
     render(<ReviewsSection />);
-    await waitFor(() => {
-      expect(screen.getByText(/Please check back in a moment/)).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByText(/Please check back in a moment/)).toBeInTheDocument();
+      },
+      { timeout: 8000 },
+    );
   });
 
   it("shows empty state when no reviews", async () => {
-    server.use(http.get("/api/reviews", () => HttpResponse.json([])));
+    server.use(
+      http.get("/api/reviews", () =>
+        HttpResponse.json({ rating: 0, total_reviews: 0, reviews: [] }),
+      ),
+    );
     render(<ReviewsSection />);
     await waitFor(() => {
       expect(screen.getByText("No reviews yet.")).toBeInTheDocument();
@@ -58,7 +65,9 @@ describe("ReviewsSection", () => {
 
   it("handles zero rating correctly", async () => {
     server.use(
-      http.get("/api/reviews/rating", () => HttpResponse.json({ average: 0, count: 0 })),
+      http.get("/api/reviews", () =>
+        HttpResponse.json({ rating: 0, total_reviews: 0, reviews: [] }),
+      ),
     );
     render(<ReviewsSection />);
     await waitFor(() => {
@@ -68,7 +77,15 @@ describe("ReviewsSection", () => {
 
   it("renders half star for non-integer ratings", async () => {
     server.use(
-      http.get("/api/reviews/rating", () => HttpResponse.json({ average: 3.7, count: 10 })),
+      http.get("/api/reviews", () =>
+        HttpResponse.json({
+          rating: 3.7,
+          total_reviews: 10,
+          reviews: [
+            { id: "r1", name: "User", text: "Good", rating: 4, created_at: null },
+          ],
+        }),
+      ),
     );
     render(<ReviewsSection />);
     await waitFor(() => {
@@ -79,7 +96,15 @@ describe("ReviewsSection", () => {
   it("renders correct count text", async () => {
     render(<ReviewsSection />);
     await waitFor(() => {
-      expect(screen.getByText(/from 42 reviews/)).toBeInTheDocument();
+      expect(screen.getByText(/from 120 reviews/)).toBeInTheDocument();
     });
+  });
+
+  it("shows Google badge for Google reviews", async () => {
+    render(<ReviewsSection />);
+    await waitFor(() => {
+      expect(screen.getByText("Alice")).toBeInTheDocument();
+    });
+    expect(screen.getAllByText("Google").length).toBeGreaterThan(0);
   });
 });

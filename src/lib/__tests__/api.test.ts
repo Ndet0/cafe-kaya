@@ -147,10 +147,12 @@ describe("gallery endpoints", () => {
 });
 
 describe("reviews endpoints", () => {
-  it("getReviews returns reviews", async () => {
-    const reviews = await getReviews();
-    expect(reviews).toHaveLength(2);
-    expect(reviews[0].name).toBe("Alice");
+  it("getReviews returns reviews list response", async () => {
+    const data = await getReviews();
+    expect(data.reviews).toHaveLength(2);
+    expect(data.reviews[0].name).toBe("Alice");
+    expect(data.rating).toBe(4.7);
+    expect(data.total_reviews).toBe(120);
   });
 
   it("getPendingReviews returns array", async () => {

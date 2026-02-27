@@ -19,9 +19,17 @@ class ReviewResponse(BaseModel):
     text: str
     rating: int
     created_at: str | None = None
+    source: str | None = None  # "local" | "google"
+    profile_photo_url: str | None = None
 
     class Config:
         from_attributes = True
+
+
+class ReviewsListResponse(BaseModel):
+    rating: float
+    total_reviews: int
+    reviews: list[ReviewResponse]
 
 
 class ReviewRatingResponse(BaseModel):

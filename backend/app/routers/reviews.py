@@ -5,38 +5,94 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.models.review import Review
+from app.models.settings import SiteSettings
 from app.models.user import User
-from app.schemas.review import ReviewCreate, ReviewUpdate, ReviewResponse, ReviewRatingResponse
+from app.schemas.review import (
+    ReviewCreate,
+    ReviewUpdate,
+    ReviewResponse,
+    ReviewRatingResponse,
+    ReviewsListResponse,
+)
 from app.dependencies import get_current_user
+from app.services.review_sync import sync_google_reviews_if_needed
 
 router = APIRouter()
 
+GOOGLE_RATING_KEY = "google_reviews_rating"
+GOOGLE_TOTAL_KEY = "google_reviews_total"
 
-@router.get("", response_model=list[ReviewResponse])
+
+@router.get("", response_model=ReviewsListResponse)
 async def list_reviews(
     limit: int = Query(50, ge=1, le=100),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db),
 ):
-    """List approved reviews (public)."""
+    """List approved reviews (public). Triggers Google sync if cache expired. Returns combined local + Google."""
+    await sync_google_reviews_if_needed(db)
+
+    # Order by review_time (Google) or created_at (local), newest first
     result = await db.execute(
         select(Review)
         .where(Review.status == "approved")
-        .order_by(Review.created_at.desc())
+        .order_by(func.coalesce(Review.review_time, Review.created_at).desc().nullslast())
         .limit(limit)
         .offset(offset)
     )
     reviews = result.scalars().all()
-    return [
-        ReviewResponse(
-            id=r.id,
-            name=r.name,
-            text=r.text,
-            rating=r.rating,
-            created_at=r.created_at.isoformat() if r.created_at else None,
+
+    # Prefer Google rating/total if available
+    rating = 0.0
+    total_reviews = 0
+    result = await db.execute(
+        select(SiteSettings).where(
+            SiteSettings.key.in_([GOOGLE_RATING_KEY, GOOGLE_TOTAL_KEY])
         )
-        for r in reviews
-    ]
+    )
+    for row in result.scalars().all():
+        if row.key == GOOGLE_RATING_KEY and row.value:
+            try:
+                rating = float(row.value)
+            except (ValueError, TypeError):
+                pass
+        elif row.key == GOOGLE_TOTAL_KEY and row.value:
+            try:
+                total_reviews = int(row.value)
+            except (ValueError, TypeError):
+                pass
+
+    if total_reviews == 0:
+        agg = await db.execute(
+            select(
+                func.avg(Review.rating).label("avg"),
+                func.count(Review.id).label("count"),
+            ).where(Review.status == "approved")
+        )
+        r = agg.one()
+        rating = float(r.avg) if r.avg is not None else 0.0
+        total_reviews = r.count or 0
+
+    return ReviewsListResponse(
+        rating=round(rating, 1),
+        total_reviews=total_reviews,
+        reviews=[
+            ReviewResponse(
+                id=r.id,
+                name=r.name,
+                text=r.text,
+                rating=r.rating,
+                created_at=(
+                    (r.review_time or r.created_at).isoformat()
+                    if (r.review_time or r.created_at)
+                    else None
+                ),
+                source="google" if r.source == "google" else "local",
+                profile_photo_url=r.profile_photo_url,
+            )
+            for r in reviews
+        ],
+    )
 
 
 @router.get("/rating", response_model=ReviewRatingResponse)

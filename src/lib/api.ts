@@ -112,6 +112,14 @@ export interface ReviewResponse {
   text: string;
   rating: number;
   created_at?: string;
+  source?: "local" | "google";
+  profile_photo_url?: string | null;
+}
+
+export interface ReviewsListResponse {
+  rating: number;
+  total_reviews: number;
+  reviews: ReviewResponse[];
 }
 
 export type ReviewStatus = "pending" | "approved" | "rejected";
@@ -242,8 +250,8 @@ export function reorderGallery(orderedIds: string[]): Promise<void> {
 }
 
 // Reviews
-export function getReviews(limit = 50, offset = 0): Promise<ReviewResponse[]> {
-  return request<ReviewResponse[]>("/api/reviews", {
+export function getReviews(limit = 50, offset = 0): Promise<ReviewsListResponse> {
+  return request<ReviewsListResponse>("/api/reviews", {
     params: { limit: String(limit), offset: String(offset) },
   });
 }

@@ -19,6 +19,7 @@ jobs:
           cache: npm
 
       - run: npm ci
+      - run: npm run typecheck
       - run: npm run test:coverage
       - run: npm run build
 
@@ -40,3 +41,43 @@ jobs:
           sleep 3
           docker logs cafe-kaya-test
           docker stop cafe-kaya-test
+
+  backend-tests:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: testuser
+          POSTGRES_PASSWORD: testpassword
+          POSTGRES_DB: testdb
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          cd backend
+          python -m venv .venv
+          .venv/bin/pip install -r requirements.txt
+
+      - name: Run pytest
+        env:
+          CAFE_DATABASE_URL: postgresql+asyncpg://REMOVED_TEST_DB
+          JWT_SECRET: REMOVED_JWT_SECRET
+          GOOGLE_PLACE_ID: test-place-id
+          GOOGLE_PLACES_API_KEY: REMOVED_GOOGLE_API_KEY
+        run: |
+          cd backend
+          .venv/bin/python -m pytest tests/ -v --cov=app --cov-branch --cov-fail-under=81

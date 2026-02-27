@@ -20,5 +20,9 @@ class Review(Base):
     text: Mapped[str] = mapped_column(Text, nullable=False)
     rating: Mapped[int] = mapped_column(Integer, nullable=False)  # 1-5
     status: Mapped[str] = mapped_column(String(20), default="pending", nullable=False)  # pending, approved, rejected
-    source: Mapped[str | None] = mapped_column(String(50), nullable=True)  # e.g. "website", "google"
+    source: Mapped[str | None] = mapped_column(String(50), nullable=True)  # "local" | "google"
+    google_review_id: Mapped[str | None] = mapped_column(String(100), unique=True, nullable=True, index=True)
+    profile_photo_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    review_time: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_synced_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)

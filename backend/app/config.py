@@ -57,6 +57,11 @@ class Settings(BaseSettings):
     cloudinary_api_key: str | None = None
     cloudinary_api_secret: str | None = None
 
+    # Google Places (optional, for review sync)
+    google_places_api_key: str | None = Field(default=None, validation_alias="GOOGLE_PLACES_API_KEY")
+    google_place_id: str | None = Field(default=None, validation_alias="GOOGLE_PLACE_ID")
+    google_reviews_cache_hours: int = Field(default=12, validation_alias="GOOGLE_REVIEWS_CACHE_HOURS")
+
     class Config:
         env_file = _BACKEND_DIR / ".env"
         env_file_encoding = "utf-8"

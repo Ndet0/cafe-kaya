@@ -60,6 +60,21 @@ describe("Navigation", () => {
     expect(screen.getByText("Westlands, Nairobi")).toBeInTheDocument();
   });
 
+  it("renders Reviews section", async () => {
+    renderApp("/");
+    await waitFor(() => {
+      expect(screen.getByText("What Our Guests Say")).toBeInTheDocument();
+    });
+  });
+
+  it("shows Google badge when reviews include Google source", async () => {
+    renderApp("/");
+    await waitFor(() => {
+      expect(screen.getByText("Alice")).toBeInTheDocument();
+    });
+    expect(screen.getAllByText("Google").length).toBeGreaterThan(0);
+  });
+
   it("renders login page at /login", async () => {
     renderApp("/login");
     await waitFor(() => {

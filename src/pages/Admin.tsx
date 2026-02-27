@@ -42,7 +42,7 @@ const Admin = () => {
           <div className="grid gap-6 lg:grid-cols-[240px_1fr]">
             <aside
               className={cn(
-                "rounded-xl border bg-background p-3 h-fit lg:sticky lg:top-24",
+                "z-40 rounded-xl border bg-background p-3 h-fit lg:sticky lg:top-24",
                 "lg:block",
                 sidebarOpen ? "block" : "hidden"
               )}

@@ -1,18 +1,20 @@
 """Tests for /api/menu endpoints (categories + menu items)."""
+
 import uuid
 
 import pytest
+from app.models.menu import Category, MenuItem
 from httpx import AsyncClient
 from sqlalchemy.orm import Session
-
-from app.models.menu import Category, MenuItem
-
 
 # ---------------------------------------------------------------------------
 # Helpers — use sync session, commit so the ASGI app can see the data
 # ---------------------------------------------------------------------------
 
-def _create_category(db: Session, name: str = "Drinks", sort_order: int = 0) -> Category:
+
+def _create_category(
+    db: Session, name: str = "Drinks", sort_order: int = 0
+) -> Category:
     cat = Category(name=name, sort_order=sort_order)
     db.add(cat)
     db.commit()
@@ -45,6 +47,7 @@ def _create_item(
 # GET /api/menu/categories (public)
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_list_categories_empty(client: AsyncClient):
     r = await client.get("/api/menu/categories")
@@ -67,6 +70,7 @@ async def test_list_categories(client: AsyncClient, db: Session):
 # GET /api/menu (public)
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_list_menu_items_empty(client: AsyncClient):
     r = await client.get("/api/menu")
@@ -86,9 +90,7 @@ async def test_list_menu_items(client: AsyncClient, db: Session):
 
 
 @pytest.mark.asyncio
-async def test_list_menu_items_filter_by_category(
-    client: AsyncClient, db: Session
-):
+async def test_list_menu_items_filter_by_category(client: AsyncClient, db: Session):
     cat1 = _create_category(db, "Hot")
     cat2 = _create_category(db, "Cold")
     _create_item(db, cat1, "Americano", 3.50)
@@ -103,6 +105,7 @@ async def test_list_menu_items_filter_by_category(
 # ---------------------------------------------------------------------------
 # GET /api/menu/{item_id} (public)
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_get_menu_item(client: AsyncClient, db: Session):
@@ -122,6 +125,7 @@ async def test_get_menu_item_not_found(client: AsyncClient):
 # ---------------------------------------------------------------------------
 # POST /api/menu/categories (admin)
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_create_category_admin(client: AsyncClient, admin_user, auth_headers):
@@ -143,6 +147,7 @@ async def test_create_category_unauthenticated(client: AsyncClient):
 # ---------------------------------------------------------------------------
 # POST /api/menu (admin)
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_create_menu_item_admin(
@@ -183,17 +188,21 @@ async def test_create_menu_item_bad_category(
 
 @pytest.mark.asyncio
 async def test_create_menu_item_unauthenticated(client: AsyncClient):
-    r = await client.post("/api/menu", json={
-        "name": "No Auth",
-        "price": 1.00,
-        "category_id": str(uuid.uuid4()),
-    })
+    r = await client.post(
+        "/api/menu",
+        json={
+            "name": "No Auth",
+            "price": 1.00,
+            "category_id": str(uuid.uuid4()),
+        },
+    )
     assert r.status_code == 401
 
 
 # ---------------------------------------------------------------------------
 # PUT /api/menu/{item_id} (admin)
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_update_menu_item(
@@ -231,6 +240,7 @@ async def test_update_menu_item_unauthenticated(client: AsyncClient):
 # ---------------------------------------------------------------------------
 # DELETE /api/menu/{item_id} (admin)
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_delete_menu_item(

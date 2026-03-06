@@ -1,11 +1,11 @@
 """Tests for /api/upload endpoint."""
+
 import io
 from unittest.mock import AsyncMock, patch
 
 import pytest
-from httpx import AsyncClient
-
 from app.services.upload import upload_file
+from httpx import AsyncClient
 
 
 def _fake_image_file(
@@ -19,6 +19,7 @@ def _fake_image_file(
 # ---------------------------------------------------------------------------
 # POST /api/upload (admin)
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 @patch(
@@ -41,9 +42,7 @@ async def test_upload_image_success(
 
 
 @pytest.mark.asyncio
-async def test_upload_non_image_rejected(
-    client: AsyncClient, admin_user, auth_headers
-):
+async def test_upload_non_image_rejected(client: AsyncClient, admin_user, auth_headers):
     buf = io.BytesIO(b"not an image")
     r = await client.post(
         "/api/upload",
@@ -87,6 +86,7 @@ async def test_upload_cloudinary_not_configured(
 # ---------------------------------------------------------------------------
 # Upload service unit tests
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 @patch("app.services.upload.settings")
@@ -134,6 +134,11 @@ async def test_upload_file_upload_sync_path(mock_settings):
     mock_settings.cloudinary_api_key = "key"
     mock_settings.cloudinary_api_secret = "secret"
     import cloudinary.uploader
-    with patch.object(cloudinary.uploader, "upload", return_value={"secure_url": "https://res.cloudinary.com/demo/uploaded.jpg"}):
+
+    with patch.object(
+        cloudinary.uploader,
+        "upload",
+        return_value={"secure_url": "https://res.cloudinary.com/demo/uploaded.jpg"},
+    ):
         result = await upload_file(b"imagedata", "photo.jpg", folder="test-folder")
     assert result == "https://res.cloudinary.com/demo/uploaded.jpg"

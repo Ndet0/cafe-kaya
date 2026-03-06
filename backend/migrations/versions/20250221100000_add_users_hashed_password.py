@@ -5,6 +5,7 @@ Revises: 20250221000000
 Create Date: 2025-02-21
 
 """
+
 from typing import Sequence, Union
 
 from alembic import op
@@ -20,15 +21,9 @@ def upgrade() -> None:
     op.execute(
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS hashed_password VARCHAR(255);"
     )
-    op.execute(
-        "UPDATE users SET hashed_password = '' WHERE hashed_password IS NULL;"
-    )
-    op.execute(
-        "ALTER TABLE users ALTER COLUMN hashed_password SET NOT NULL;"
-    )
+    op.execute("UPDATE users SET hashed_password = '' WHERE hashed_password IS NULL;")
+    op.execute("ALTER TABLE users ALTER COLUMN hashed_password SET NOT NULL;")
 
 
 def downgrade() -> None:
-    op.execute(
-        "ALTER TABLE users DROP COLUMN IF EXISTS hashed_password;"
-    )
+    op.execute("ALTER TABLE users DROP COLUMN IF EXISTS hashed_password;")

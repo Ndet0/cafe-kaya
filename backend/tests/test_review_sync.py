@@ -1,22 +1,18 @@
 """Unit tests for review sync service."""
+
 from datetime import datetime, timedelta, timezone
 from unittest.mock import patch
 
 import pytest
 import respx
-from httpx import Response
-from sqlalchemy import select
-
 from app.models.review import Review
 from app.models.settings import SiteSettings
 from app.services.google_reviews import GOOGLE_PLACES_DETAILS_URL
-from app.services.review_sync import (
-    GOOGLE_SYNC_KEY,
-    sync_google_reviews_if_needed,
-    _get_last_synced,
-    _set_last_synced,
-)
-
+from app.services.review_sync import (GOOGLE_SYNC_KEY, _get_last_synced,
+                                      _set_last_synced,
+                                      sync_google_reviews_if_needed)
+from httpx import Response
+from sqlalchemy import select
 
 # ---------------------------------------------------------------------------
 # Cache boundary tests (use patched datetime)
@@ -47,6 +43,7 @@ async def test_sync_skipped_when_cache_at_expiration_boundary(async_db):
 
     with patch("app.services.review_sync.datetime") as mock_dt:
         import datetime as dt_module
+
         mock_dt.now.return_value = FIXED_NOW
         mock_dt.fromtimestamp = dt_module.datetime.fromtimestamp
         mock_dt.fromisoformat = dt_module.datetime.fromisoformat
@@ -100,6 +97,7 @@ async def test_sync_runs_when_cache_older_than_boundary(async_db):
 
     with patch("app.services.review_sync.datetime") as mock_dt:
         import datetime as dt_module
+
         mock_dt.now.return_value = FIXED_NOW
         mock_dt.fromtimestamp = dt_module.datetime.fromtimestamp
         mock_dt.fromisoformat = dt_module.datetime.fromisoformat
@@ -132,6 +130,7 @@ async def test_sync_skipped_when_cache_newer_than_boundary(async_db):
 
     with patch("app.services.review_sync.datetime") as mock_dt:
         import datetime as dt_module
+
         mock_dt.now.return_value = FIXED_NOW
         mock_dt.fromtimestamp = dt_module.datetime.fromtimestamp
         mock_dt.fromisoformat = dt_module.datetime.fromisoformat
@@ -145,6 +144,7 @@ async def test_sync_skipped_when_cache_newer_than_boundary(async_db):
 # ---------------------------------------------------------------------------
 # Duplicate upsert, empty DB, empty reviews, Google fail
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 @respx.mock
@@ -173,7 +173,11 @@ async def test_duplicate_google_review_id_upsert_no_duplicate_rows(async_db):
     result1 = await sync_google_reviews_if_needed(async_db)
     assert result1 is True
 
-    count1 = (await async_db.execute(select(Review).where(Review.source == "google"))).scalars().all()
+    count1 = (
+        (await async_db.execute(select(Review).where(Review.source == "google")))
+        .scalars()
+        .all()
+    )
     assert len(count1) == 1
 
     # Make cache expired: set last_synced_at to 13 hours ago so second sync runs
@@ -186,7 +190,11 @@ async def test_duplicate_google_review_id_upsert_no_duplicate_rows(async_db):
     result2 = await sync_google_reviews_if_needed(async_db)
 
     assert result2 is True
-    count2 = (await async_db.execute(select(Review).where(Review.source == "google"))).scalars().all()
+    count2 = (
+        (await async_db.execute(select(Review).where(Review.source == "google")))
+        .scalars()
+        .all()
+    )
     assert len(count2) == 1
     assert count2[0].name == "Alice"
 
@@ -204,8 +212,18 @@ async def test_sync_when_db_initially_empty(async_db):
                     "rating": 4.5,
                     "user_ratings_total": 2,
                     "reviews": [
-                        {"author_name": "A", "text": "Good", "rating": 5, "time": 1700000000},
-                        {"author_name": "B", "text": "Nice", "rating": 4, "time": 1700000001},
+                        {
+                            "author_name": "A",
+                            "text": "Good",
+                            "rating": 5,
+                            "time": 1700000000,
+                        },
+                        {
+                            "author_name": "B",
+                            "text": "Nice",
+                            "rating": 4,
+                            "time": 1700000001,
+                        },
                     ],
                 },
             },
@@ -213,7 +231,11 @@ async def test_sync_when_db_initially_empty(async_db):
     )
     result = await sync_google_reviews_if_needed(async_db)
     assert result is True
-    reviews = (await async_db.execute(select(Review).where(Review.source == "google"))).scalars().all()
+    reviews = (
+        (await async_db.execute(select(Review).where(Review.source == "google")))
+        .scalars()
+        .all()
+    )
     assert len(reviews) == 2
 
 
@@ -232,9 +254,11 @@ async def test_sync_when_google_returns_empty_list(async_db):
     )
     result = await sync_google_reviews_if_needed(async_db)
     assert result is True
-    row = (await async_db.execute(
-        select(SiteSettings).where(SiteSettings.key == GOOGLE_SYNC_KEY)
-    )).scalar_one_or_none()
+    row = (
+        await async_db.execute(
+            select(SiteSettings).where(SiteSettings.key == GOOGLE_SYNC_KEY)
+        )
+    ).scalar_one_or_none()
     assert row is not None
     assert row.value is not None
 
@@ -263,6 +287,7 @@ async def test_sync_when_google_fails_but_cached_reviews_exist(async_db):
 
     with patch("app.services.review_sync.datetime") as mock_dt:
         import datetime as dt_module
+
         future = datetime.now(timezone.utc) + timedelta(hours=13)
         mock_dt.now.return_value = future
         mock_dt.fromtimestamp = dt_module.datetime.fromtimestamp
@@ -271,7 +296,11 @@ async def test_sync_when_google_fails_but_cached_reviews_exist(async_db):
         result = await sync_google_reviews_if_needed(async_db)
 
     assert result is False
-    reviews = (await async_db.execute(select(Review).where(Review.source == "google"))).scalars().all()
+    reviews = (
+        (await async_db.execute(select(Review).where(Review.source == "google")))
+        .scalars()
+        .all()
+    )
     assert len(reviews) == 1
     assert reviews[0].name == "Cached"
 
@@ -279,6 +308,7 @@ async def test_sync_when_google_fails_but_cached_reviews_exist(async_db):
 # ---------------------------------------------------------------------------
 # _get_last_synced from SiteSettings, invalid value, _set_last_synced new row
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_get_last_synced_from_site_settings(async_db):
@@ -312,9 +342,11 @@ async def test_set_last_synced_creates_new_row(async_db):
     now = datetime.now(timezone.utc)
     await _set_last_synced(async_db, now)
 
-    row = (await async_db.execute(
-        select(SiteSettings).where(SiteSettings.key == GOOGLE_SYNC_KEY)
-    )).scalar_one_or_none()
+    row = (
+        await async_db.execute(
+            select(SiteSettings).where(SiteSettings.key == GOOGLE_SYNC_KEY)
+        )
+    ).scalar_one_or_none()
     assert row is not None
     assert row.value == now.isoformat()
 
@@ -328,9 +360,11 @@ async def test_set_last_synced_updates_existing_row(async_db):
     now = datetime.now(timezone.utc)
     await _set_last_synced(async_db, now)
 
-    row = (await async_db.execute(
-        select(SiteSettings).where(SiteSettings.key == GOOGLE_SYNC_KEY)
-    )).scalar_one_or_none()
+    row = (
+        await async_db.execute(
+            select(SiteSettings).where(SiteSettings.key == GOOGLE_SYNC_KEY)
+        )
+    ).scalar_one_or_none()
     assert row is not None
     assert row.value == now.isoformat()
 
@@ -338,6 +372,7 @@ async def test_set_last_synced_updates_existing_row(async_db):
 # ---------------------------------------------------------------------------
 # No Google config
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_sync_returns_false_when_google_not_configured(async_db, monkeypatch):

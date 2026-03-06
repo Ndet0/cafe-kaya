@@ -1,4 +1,5 @@
 """Google Places API service for fetching reviews."""
+
 import hashlib
 import json
 import logging
@@ -6,7 +7,6 @@ import re
 from datetime import datetime, timezone
 
 import httpx
-
 from app.config import get_settings
 
 logger = logging.getLogger(__name__)
@@ -66,8 +66,17 @@ async def fetch_google_reviews() -> dict | None:
 
     status = data.get("status")
     if status not in ("OK", "ZERO_RESULTS"):
-        logger.warning("Google Places API error status: %s - %s", status, data.get("error_message", ""))
-        if status in ("REQUEST_DENIED", "INVALID_REQUEST", "OVER_QUERY_LIMIT", "UNKNOWN_ERROR"):
+        logger.warning(
+            "Google Places API error status: %s - %s",
+            status,
+            data.get("error_message", ""),
+        )
+        if status in (
+            "REQUEST_DENIED",
+            "INVALID_REQUEST",
+            "OVER_QUERY_LIMIT",
+            "UNKNOWN_ERROR",
+        ):
             return None
         return None
 
@@ -85,17 +94,23 @@ async def fetch_google_reviews() -> dict | None:
         if rating_val is None:
             continue
         profile_photo_url = r.get("profile_photo_url")
-        if profile_photo_url and not profile_photo_url.startswith(("http://", "https://")):
+        if profile_photo_url and not profile_photo_url.startswith(
+            ("http://", "https://")
+        ):
             profile_photo_url = None
 
-        reviews.append({
-            "google_review_id": _make_google_review_id(author_name, time_sec, text),
-            "author_name": author_name[:200],
-            "text": text[:5000] if text else "",
-            "rating": int(rating_val) if 1 <= rating_val <= 5 else 5,
-            "profile_photo_url": profile_photo_url[:500] if profile_photo_url else None,
-            "time": time_sec,
-        })
+        reviews.append(
+            {
+                "google_review_id": _make_google_review_id(author_name, time_sec, text),
+                "author_name": author_name[:200],
+                "text": text[:5000] if text else "",
+                "rating": int(rating_val) if 1 <= rating_val <= 5 else 5,
+                "profile_photo_url": (
+                    profile_photo_url[:500] if profile_photo_url else None
+                ),
+                "time": time_sec,
+            }
+        )
 
     return {
         "rating": float(rating) if rating is not None else 0.0,

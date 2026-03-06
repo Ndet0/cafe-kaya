@@ -1,4 +1,5 @@
 """Site settings schemas."""
+
 from pydantic import BaseModel
 
 

@@ -1,11 +1,12 @@
 """Tests for /api/settings endpoints."""
+
 import pytest
 from httpx import AsyncClient
-
 
 # ---------------------------------------------------------------------------
 # GET /api/settings/contact (public)
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_get_contact_settings_empty(client: AsyncClient):
@@ -13,8 +14,15 @@ async def test_get_contact_settings_empty(client: AsyncClient):
     r = await client.get("/api/settings/contact")
     assert r.status_code == 200
     data = r.json()
-    for key in ("address", "phone", "hours", "map_embed_url",
-                "instagram_url", "facebook_url", "twitter_url"):
+    for key in (
+        "address",
+        "phone",
+        "hours",
+        "map_embed_url",
+        "instagram_url",
+        "facebook_url",
+        "twitter_url",
+    ):
         assert key in data
 
 
@@ -22,10 +30,9 @@ async def test_get_contact_settings_empty(client: AsyncClient):
 # PUT /api/settings/contact (admin)
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
-async def test_update_contact_settings(
-    client: AsyncClient, admin_user, auth_headers
-):
+async def test_update_contact_settings(client: AsyncClient, admin_user, auth_headers):
     r = await client.put(
         "/api/settings/contact",
         json={
@@ -51,9 +58,7 @@ async def test_update_contact_settings_unauthenticated(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_update_and_read_back(
-    client: AsyncClient, admin_user, auth_headers
-):
+async def test_update_and_read_back(client: AsyncClient, admin_user, auth_headers):
     """Update, then GET to verify persistence within the test transaction."""
     await client.put(
         "/api/settings/contact",
@@ -66,9 +71,7 @@ async def test_update_and_read_back(
 
 
 @pytest.mark.asyncio
-async def test_partial_update(
-    client: AsyncClient, admin_user, auth_headers
-):
+async def test_partial_update(client: AsyncClient, admin_user, auth_headers):
     """Only the provided keys should change; others remain untouched."""
     await client.put(
         "/api/settings/contact",

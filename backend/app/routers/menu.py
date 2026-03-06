@@ -1,21 +1,17 @@
 """Menu router: categories and menu items CRUD."""
+
 from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+
+from app.db import get_db
+from app.dependencies import get_current_user
+from app.models.menu import Category, MenuItem
+from app.models.user import User
+from app.schemas.menu import (CategoryCreate, CategoryResponse, MenuItemCreate,
+                              MenuItemResponse, MenuItemUpdate)
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
-
-from app.db import get_db
-from app.models.menu import Category, MenuItem
-from app.models.user import User
-from app.schemas.menu import (
-    CategoryCreate,
-    CategoryResponse,
-    MenuItemCreate,
-    MenuItemUpdate,
-    MenuItemResponse,
-)
-from app.dependencies import get_current_user
 
 router = APIRouter()
 
@@ -36,7 +32,11 @@ async def list_menu_items(
     db: AsyncSession = Depends(get_db),
 ):
     """List menu items, optionally filtered by category (public)."""
-    q = select(MenuItem).where(MenuItem.is_available == True).order_by(MenuItem.sort_order, MenuItem.name)
+    q = (
+        select(MenuItem)
+        .where(MenuItem.is_available == True)
+        .order_by(MenuItem.sort_order, MenuItem.name)
+    )
     if category:
         q = q.where(MenuItem.category_id == str(category))
     q = q.options(selectinload(MenuItem.category))
@@ -65,7 +65,9 @@ async def get_menu_item(
 ):
     """Get a single menu item (public)."""
     result = await db.execute(
-        select(MenuItem).where(MenuItem.id == str(item_id)).options(selectinload(MenuItem.category))
+        select(MenuItem)
+        .where(MenuItem.id == str(item_id))
+        .options(selectinload(MenuItem.category))
     )
     item = result.scalar_one_or_none()
     if not item:
@@ -123,7 +125,11 @@ async def create_menu_item(
     db.add(item)
     await db.commit()
     await db.refresh(item)
-    result = await db.execute(select(MenuItem).where(MenuItem.id == item.id).options(selectinload(MenuItem.category)))
+    result = await db.execute(
+        select(MenuItem)
+        .where(MenuItem.id == item.id)
+        .options(selectinload(MenuItem.category))
+    )
     item = result.scalar_one()
     return MenuItemResponse(
         id=item.id,
@@ -147,7 +153,9 @@ async def update_menu_item(
 ):
     """Update a menu item (admin)."""
     result = await db.execute(
-        select(MenuItem).where(MenuItem.id == str(item_id)).options(selectinload(MenuItem.category))
+        select(MenuItem)
+        .where(MenuItem.id == str(item_id))
+        .options(selectinload(MenuItem.category))
     )
     item = result.scalar_one_or_none()
     if not item:
@@ -155,7 +163,9 @@ async def update_menu_item(
     updates = body.model_dump(exclude_unset=True)
     if "category_id" in updates and updates["category_id"] is not None:
         updates["category_id"] = str(updates["category_id"])
-        r = await db.execute(select(Category).where(Category.id == updates["category_id"]))
+        r = await db.execute(
+            select(Category).where(Category.id == updates["category_id"])
+        )
         if not r.scalar_one_or_none():
             raise HTTPException(status_code=400, detail="Category not found")
     for k, v in updates.items():

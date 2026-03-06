@@ -1,4 +1,5 @@
 """Contact message schemas."""
+
 from pydantic import BaseModel, EmailStr
 
 

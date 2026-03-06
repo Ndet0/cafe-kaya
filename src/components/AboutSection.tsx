@@ -39,8 +39,8 @@ const AboutSection = () => (
             More Than a Café,<br />A Creative Sanctuary
           </h2>
           <p className="text-muted-foreground text-lg leading-relaxed mb-8">
-            Nestled in the heart of Westlands, Cafe Kaya is where organic coffee meets artistic expression. 
-            We've created a space where sustainability isn't just a word — it's woven into every cup, every dish, 
+            Nestled in the heart of Westlands, Cafe Kaya is where organic coffee meets artistic expression.
+            We've created a space where sustainability isn't just a word — it's woven into every cup, every dish,
             and every corner of our eco-friendly haven. Come for the coffee, stay for the community.
           </p>
 

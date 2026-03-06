@@ -5,10 +5,11 @@ Revises: 20250221100000
 Create Date: 2025-02-27
 
 """
+
 from typing import Sequence, Union
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "20250227100000"
@@ -18,11 +19,22 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    op.add_column("reviews", sa.Column("google_review_id", sa.String(100), nullable=True))
-    op.add_column("reviews", sa.Column("profile_photo_url", sa.String(500), nullable=True))
-    op.add_column("reviews", sa.Column("review_time", sa.DateTime(timezone=True), nullable=True))
-    op.add_column("reviews", sa.Column("last_synced_at", sa.DateTime(timezone=True), nullable=True))
-    op.create_index("ix_reviews_google_review_id", "reviews", ["google_review_id"], unique=True)
+    op.add_column(
+        "reviews", sa.Column("google_review_id", sa.String(100), nullable=True)
+    )
+    op.add_column(
+        "reviews", sa.Column("profile_photo_url", sa.String(500), nullable=True)
+    )
+    op.add_column(
+        "reviews", sa.Column("review_time", sa.DateTime(timezone=True), nullable=True)
+    )
+    op.add_column(
+        "reviews",
+        sa.Column("last_synced_at", sa.DateTime(timezone=True), nullable=True),
+    )
+    op.create_index(
+        "ix_reviews_google_review_id", "reviews", ["google_review_id"], unique=True
+    )
 
 
 def downgrade() -> None:

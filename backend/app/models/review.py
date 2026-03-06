@@ -1,12 +1,12 @@
 """Review model."""
+
 import uuid
 from datetime import datetime
-from sqlalchemy import String, Text, Integer
-from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy import DateTime
 
 from app.db import Base
+from sqlalchemy import DateTime, Integer, String, Text
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import Mapped, mapped_column
 
 
 class Review(Base):
@@ -19,10 +19,22 @@ class Review(Base):
     email: Mapped[str | None] = mapped_column(String(255), nullable=True)
     text: Mapped[str] = mapped_column(Text, nullable=False)
     rating: Mapped[int] = mapped_column(Integer, nullable=False)  # 1-5
-    status: Mapped[str] = mapped_column(String(20), default="pending", nullable=False)  # pending, approved, rejected
-    source: Mapped[str | None] = mapped_column(String(50), nullable=True)  # "local" | "google"
-    google_review_id: Mapped[str | None] = mapped_column(String(100), unique=True, nullable=True, index=True)
+    status: Mapped[str] = mapped_column(
+        String(20), default="pending", nullable=False
+    )  # pending, approved, rejected
+    source: Mapped[str | None] = mapped_column(
+        String(50), nullable=True
+    )  # "local" | "google"
+    google_review_id: Mapped[str | None] = mapped_column(
+        String(100), unique=True, nullable=True, index=True
+    )
     profile_photo_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
-    review_time: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    last_synced_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
+    review_time: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    last_synced_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=datetime.utcnow
+    )

@@ -1,7 +1,8 @@
 """Application configuration from environment."""
+
 import json
-from pathlib import Path
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic import Field
 from pydantic_settings import BaseSettings
@@ -43,7 +44,12 @@ class Settings(BaseSettings):
     @property
     def cors_origins(self) -> list[str]:
         """Parsed CORS origins (comma-separated or JSON array in env; empty/missing uses default)."""
-        default = ["http://localhost:8080", "http://localhost:5173", "http://127.0.0.1:8080", "http://127.0.0.1:5173"]
+        default = [
+            "http://localhost:8080",
+            "http://localhost:5173",
+            "http://127.0.0.1:8080",
+            "http://127.0.0.1:5173",
+        ]
         value = self.cors_origins_raw
         if not value or not value.strip():
             return default
@@ -58,9 +64,15 @@ class Settings(BaseSettings):
     cloudinary_api_secret: str | None = None
 
     # Google Places (optional, for review sync)
-    google_places_api_key: str | None = Field(default=None, validation_alias="GOOGLE_PLACES_API_KEY")
-    google_place_id: str | None = Field(default=None, validation_alias="GOOGLE_PLACE_ID")
-    google_reviews_cache_hours: int = Field(default=12, validation_alias="GOOGLE_REVIEWS_CACHE_HOURS")
+    google_places_api_key: str | None = Field(
+        default=None, validation_alias="GOOGLE_PLACES_API_KEY"
+    )
+    google_place_id: str | None = Field(
+        default=None, validation_alias="GOOGLE_PLACE_ID"
+    )
+    google_reviews_cache_hours: int = Field(
+        default=12, validation_alias="GOOGLE_REVIEWS_CACHE_HOURS"
+    )
 
     class Config:
         env_file = _BACKEND_DIR / ".env"

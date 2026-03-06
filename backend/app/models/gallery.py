@@ -1,12 +1,12 @@
 """Gallery image model."""
+
 import uuid
 from datetime import datetime
-from sqlalchemy import String, Text, Integer
-from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy import DateTime
 
 from app.db import Base
+from sqlalchemy import DateTime, Integer, String, Text
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import Mapped, mapped_column
 
 
 class GalleryImage(Base):
@@ -19,4 +19,6 @@ class GalleryImage(Base):
     alt: Mapped[str] = mapped_column(String(200), default="", nullable=False)
     span: Mapped[str] = mapped_column(String(50), default="", nullable=False)
     sort_order: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=datetime.utcnow
+    )

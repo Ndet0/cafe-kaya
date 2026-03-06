@@ -1,14 +1,15 @@
 """Site settings router: contact info (address, phone, hours, map, social)."""
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+
 import json
 
 from app.db import get_db
+from app.dependencies import get_current_user
 from app.models.settings import SiteSettings
 from app.models.user import User
 from app.schemas.settings import ContactSettingsResponse, ContactSettingsUpdate
-from app.dependencies import get_current_user
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter()
 
@@ -38,7 +39,11 @@ async def get_contact_settings(db: AsyncSession = Depends(get_db)):
     data = {}
     for row in rows:
         if row.value_json:
-            data[row.key] = json.dumps(row.value_json) if isinstance(row.value_json, dict) else row.value
+            data[row.key] = (
+                json.dumps(row.value_json)
+                if isinstance(row.value_json, dict)
+                else row.value
+            )
         else:
             data[row.key] = row.value
     return ContactSettingsResponse(**{k: data.get(k) for k in CONTACT_KEYS})

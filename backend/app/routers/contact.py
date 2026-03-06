@@ -1,13 +1,13 @@
 """Contact router: submit message (public), list (admin)."""
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
+from app.dependencies import get_current_user
 from app.models.contact import ContactMessage
 from app.models.user import User
 from app.schemas.contact import ContactCreate, ContactResponse
-from app.dependencies import get_current_user
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter()
 
@@ -60,7 +60,9 @@ async def mark_read(
     current_user: User = Depends(get_current_user),
 ):
     """Mark a contact message as read (admin)."""
-    result = await db.execute(select(ContactMessage).where(ContactMessage.id == message_id))
+    result = await db.execute(
+        select(ContactMessage).where(ContactMessage.id == message_id)
+    )
     msg = result.scalar_one_or_none()
     if not msg:
         raise HTTPException(status_code=404, detail="Message not found")

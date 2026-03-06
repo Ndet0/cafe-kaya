@@ -1,21 +1,17 @@
 """Reviews router: list, submit, approve/reject."""
-from fastapi import APIRouter, Depends, HTTPException, status, Query
-from sqlalchemy import select, func
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
+from app.dependencies import get_current_user
 from app.models.review import Review
 from app.models.settings import SiteSettings
 from app.models.user import User
-from app.schemas.review import (
-    ReviewCreate,
-    ReviewUpdate,
-    ReviewResponse,
-    ReviewRatingResponse,
-    ReviewsListResponse,
-)
-from app.dependencies import get_current_user
+from app.schemas.review import (ReviewCreate, ReviewRatingResponse,
+                                ReviewResponse, ReviewsListResponse,
+                                ReviewUpdate)
 from app.services.review_sync import sync_google_reviews_if_needed
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter()
 
@@ -36,7 +32,9 @@ async def list_reviews(
     result = await db.execute(
         select(Review)
         .where(Review.status == "approved")
-        .order_by(func.coalesce(Review.review_time, Review.created_at).desc().nullslast())
+        .order_by(
+            func.coalesce(Review.review_time, Review.created_at).desc().nullslast()
+        )
         .limit(limit)
         .offset(offset)
     )
@@ -99,9 +97,9 @@ async def list_reviews(
 async def get_rating(db: AsyncSession = Depends(get_db)):
     """Get aggregate rating (average and count) for approved reviews (public)."""
     result = await db.execute(
-        select(func.avg(Review.rating).label("avg"), func.count(Review.id).label("count")).where(
-            Review.status == "approved"
-        )
+        select(
+            func.avg(Review.rating).label("avg"), func.count(Review.id).label("count")
+        ).where(Review.status == "approved")
     )
     row = result.one()
     average = float(row.avg) if row.avg is not None else 0.0
@@ -142,7 +140,9 @@ async def list_pending_reviews(
 ):
     """List pending reviews (admin)."""
     result = await db.execute(
-        select(Review).where(Review.status == "pending").order_by(Review.created_at.desc())
+        select(Review)
+        .where(Review.status == "pending")
+        .order_by(Review.created_at.desc())
     )
     reviews = result.scalars().all()
     return [
@@ -166,7 +166,9 @@ async def update_review_status(
 ):
     """Approve or reject a review (admin)."""
     if body.status not in ("approved", "rejected"):
-        raise HTTPException(status_code=400, detail="status must be 'approved' or 'rejected'")
+        raise HTTPException(
+            status_code=400, detail="status must be 'approved' or 'rejected'"
+        )
     result = await db.execute(select(Review).where(Review.id == review_id))
     review = result.scalar_one_or_none()
     if not review:

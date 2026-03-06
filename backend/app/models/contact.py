@@ -1,12 +1,12 @@
 """Contact message model."""
+
 import uuid
 from datetime import datetime
-from sqlalchemy import String, Text, Boolean
-from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy import DateTime
 
 from app.db import Base
+from sqlalchemy import Boolean, DateTime, String, Text
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import Mapped, mapped_column
 
 
 class ContactMessage(Base):
@@ -20,4 +20,6 @@ class ContactMessage(Base):
     subject: Mapped[str | None] = mapped_column(String(200), nullable=True)
     message: Mapped[str] = mapped_column(Text, nullable=False)
     read: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=datetime.utcnow
+    )

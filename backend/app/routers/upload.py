@@ -1,8 +1,9 @@
 """Upload router: multipart image upload (admin). Returns URL for use in menu/gallery."""
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+
 from app.dependencies import get_current_user
 from app.models.user import User
 from app.services.upload import upload_file
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 
 router = APIRouter()
 

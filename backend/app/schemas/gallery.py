@@ -1,4 +1,5 @@
 """Gallery image schemas."""
+
 from pydantic import BaseModel
 
 

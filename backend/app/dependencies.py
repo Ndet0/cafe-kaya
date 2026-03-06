@@ -1,11 +1,12 @@
 """FastAPI dependencies: get_db, get_current_user."""
-from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials, OAuth2PasswordBearer
-from sqlalchemy.ext.asyncio import AsyncSession
-from jose import JWTError, jwt
 
-from app.db import get_db, AsyncSessionLocal
 from app.config import get_settings
+from app.db import AsyncSessionLocal, get_db
+from fastapi import Depends, HTTPException, status
+from fastapi.security import (HTTPAuthorizationCredentials, HTTPBearer,
+                              OAuth2PasswordBearer)
+from jose import JWTError, jwt
+from sqlalchemy.ext.asyncio import AsyncSession
 
 settings = get_settings()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login", auto_error=False)
@@ -37,6 +38,7 @@ async def get_current_user(
         raise HTTPException(status_code=401, detail="Invalid or expired token")
 
     from sqlalchemy import select
+
     result = await db.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()
     if user is None:

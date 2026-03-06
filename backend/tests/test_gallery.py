@@ -1,16 +1,16 @@
 """Tests for /api/gallery endpoints."""
+
 import uuid
 
 import pytest
+from app.models.gallery import GalleryImage
 from httpx import AsyncClient
 from sqlalchemy.orm import Session
-
-from app.models.gallery import GalleryImage
-
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _create_image(
     db: Session,
@@ -28,6 +28,7 @@ def _create_image(
 # ---------------------------------------------------------------------------
 # GET /api/gallery (public)
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_list_gallery_empty(client: AsyncClient):
@@ -48,6 +49,7 @@ async def test_list_gallery(client: AsyncClient, db: Session):
 # ---------------------------------------------------------------------------
 # POST /api/gallery (admin)
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_create_gallery_image(client: AsyncClient, admin_user, auth_headers):
@@ -74,6 +76,7 @@ async def test_create_gallery_image_unauthenticated(client: AsyncClient):
 # ---------------------------------------------------------------------------
 # PUT /api/gallery/{image_id} (admin)
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_update_gallery_image(
@@ -103,15 +106,14 @@ async def test_update_gallery_image_not_found(
 
 @pytest.mark.asyncio
 async def test_update_gallery_image_unauthenticated(client: AsyncClient):
-    r = await client.put(
-        f"/api/gallery/{uuid.uuid4()}", json={"alt": "nope"}
-    )
+    r = await client.put(f"/api/gallery/{uuid.uuid4()}", json={"alt": "nope"})
     assert r.status_code == 401
 
 
 # ---------------------------------------------------------------------------
 # PUT /api/gallery/reorder (admin)
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_reorder_gallery(
@@ -137,6 +139,7 @@ async def test_reorder_gallery_unauthenticated(client: AsyncClient):
 # DELETE /api/gallery/{image_id} (admin)
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_delete_gallery_image(
     client: AsyncClient, db: Session, admin_user, auth_headers
@@ -150,9 +153,7 @@ async def test_delete_gallery_image(
 async def test_delete_gallery_image_not_found(
     client: AsyncClient, admin_user, auth_headers
 ):
-    r = await client.delete(
-        f"/api/gallery/{uuid.uuid4()}", headers=auth_headers
-    )
+    r = await client.delete(f"/api/gallery/{uuid.uuid4()}", headers=auth_headers)
     assert r.status_code == 404
 
 

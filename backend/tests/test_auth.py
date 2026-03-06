@@ -1,18 +1,21 @@
 """Tests for /api/auth endpoints."""
+
 import pytest
 from httpx import AsyncClient
-
 from tests.conftest import ADMIN_EMAIL, ADMIN_PASSWORD
-
 
 # ---- POST /api/auth/login ----
 
+
 @pytest.mark.asyncio
 async def test_login_success(client: AsyncClient, admin_user):
-    r = await client.post("/api/auth/login", json={
-        "email": ADMIN_EMAIL,
-        "password": ADMIN_PASSWORD,
-    })
+    r = await client.post(
+        "/api/auth/login",
+        json={
+            "email": ADMIN_EMAIL,
+            "password": ADMIN_PASSWORD,
+        },
+    )
     assert r.status_code == 200
     data = r.json()
     assert "access_token" in data
@@ -21,20 +24,26 @@ async def test_login_success(client: AsyncClient, admin_user):
 
 @pytest.mark.asyncio
 async def test_login_wrong_password(client: AsyncClient, admin_user):
-    r = await client.post("/api/auth/login", json={
-        "email": ADMIN_EMAIL,
-        "password": "wrongpassword",
-    })
+    r = await client.post(
+        "/api/auth/login",
+        json={
+            "email": ADMIN_EMAIL,
+            "password": "wrongpassword",
+        },
+    )
     assert r.status_code == 401
     assert "Incorrect" in r.json()["detail"]
 
 
 @pytest.mark.asyncio
 async def test_login_nonexistent_email(client: AsyncClient):
-    r = await client.post("/api/auth/login", json={
-        "email": "nobody@example.com",
-        "password": "anything",
-    })
+    r = await client.post(
+        "/api/auth/login",
+        json={
+            "email": "nobody@example.com",
+            "password": "anything",
+        },
+    )
     assert r.status_code == 401
 
 
@@ -46,14 +55,18 @@ async def test_login_missing_fields(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_login_invalid_email_format(client: AsyncClient):
-    r = await client.post("/api/auth/login", json={
-        "email": "not-an-email",
-        "password": "test",
-    })
+    r = await client.post(
+        "/api/auth/login",
+        json={
+            "email": "not-an-email",
+            "password": "test",
+        },
+    )
     assert r.status_code == 422
 
 
 # ---- GET /api/auth/login (should be 405) ----
+
 
 @pytest.mark.asyncio
 async def test_login_get_method_not_allowed(client: AsyncClient):
@@ -63,6 +76,7 @@ async def test_login_get_method_not_allowed(client: AsyncClient):
 
 
 # ---- GET /api/auth/me ----
+
 
 @pytest.mark.asyncio
 async def test_me_authenticated(client: AsyncClient, admin_user, auth_headers):
@@ -82,13 +96,18 @@ async def test_me_unauthenticated(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_me_invalid_token(client: AsyncClient):
-    r = await client.get("/api/auth/me", headers={"Authorization": "Bearer invalid-token"})
+    r = await client.get(
+        "/api/auth/me", headers={"Authorization": "Bearer invalid-token"}
+    )
     assert r.status_code == 401
 
 
 @pytest.mark.asyncio
 async def test_me_invalid_token(client: AsyncClient):
-    r = await client.get("/api/auth/me", headers={
-        "Authorization": "Bearer invalid.jwt.token",
-    })
+    r = await client.get(
+        "/api/auth/me",
+        headers={
+            "Authorization": "Bearer invalid.jwt.token",
+        },
+    )
     assert r.status_code == 401

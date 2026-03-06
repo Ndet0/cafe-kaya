@@ -4,43 +4,38 @@ Strategy: use the *synchronous* engine (psycopg2) for all test-data seeding
 and cleanup, so the async connection pool used by the ASGI app never conflicts
 with test infrastructure operations.
 """
+
 import os
 from typing import AsyncGenerator
 
 import pytest
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import create_engine
+from sqlalchemy.ext.asyncio import (AsyncSession, async_sessionmaker,
+                                    create_async_engine)
 from sqlalchemy.orm import Session
 from sqlalchemy.pool import NullPool
-from sqlalchemy.ext.asyncio import (
-    AsyncSession,
-    create_async_engine,
-    async_sessionmaker,
-)
 
 # Point settings at test env before any app import
 # CI workflow sets CAFE_DATABASE_URL; local dev uses docker-compose default
 if "CAFE_DATABASE_URL" not in os.environ:
-    os.environ["CAFE_DATABASE_URL"] = (
-        "postgresql+asyncpg://REMOVED_TEST_DB"
-    )
+    os.environ["CAFE_DATABASE_URL"] = "postgresql+asyncpg://REMOVED_TEST_DB"
 os.environ["JWT_SECRET"] = "test-secret-key-not-for-production"
 os.environ["JWT_ALGORITHM"] = "HS256"
 # Dummy Google config so sync path runs; respx mocks the API in tests
 os.environ["GOOGLE_PLACE_ID"] = "test-place-id"
 os.environ["GOOGLE_PLACES_API_KEY"] = "REMOVED_GOOGLE_API_KEY"
 
+import app.models.contact  # noqa: F401, E402
+import app.models.gallery  # noqa: F401, E402
+# Import all model modules so Base.metadata knows every table
+import app.models.menu  # noqa: F401, E402
+import app.models.review  # noqa: F401, E402
+import app.models.settings  # noqa: F401, E402
 from app.db import Base, get_db  # noqa: E402
 from app.main import app as fastapi_app  # noqa: E402
 from app.models.user import User  # noqa: E402
-from app.services.auth import hash_password, create_access_token  # noqa: E402
-
-# Import all model modules so Base.metadata knows every table
-import app.models.menu  # noqa: F401, E402
-import app.models.gallery  # noqa: F401, E402
-import app.models.review  # noqa: F401, E402
-import app.models.contact  # noqa: F401, E402
-import app.models.settings  # noqa: F401, E402
+from app.services.auth import create_access_token, hash_password  # noqa: E402
 
 TEST_DB_ASYNC = os.environ["CAFE_DATABASE_URL"]
 TEST_DB_SYNC = TEST_DB_ASYNC.replace("+asyncpg", "+psycopg2")
@@ -61,6 +56,7 @@ TestAsyncSession = async_sessionmaker(
 # Session-scoped: create / drop tables once
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture(scope="session", autouse=True)
 def _create_tables():
     Base.metadata.create_all(bind=engine_sync)
@@ -72,6 +68,7 @@ def _create_tables():
 # ---------------------------------------------------------------------------
 # Per-test cleanup (sync — avoids asyncpg pool contention)
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture(autouse=True)
 def _truncate_tables():
@@ -85,6 +82,7 @@ def _truncate_tables():
 # Async DB session for unit-testing services directly
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture
 async def async_db() -> AsyncGenerator[AsyncSession, None]:
     """Async session for testing services that need direct DB access."""
@@ -96,6 +94,7 @@ async def async_db() -> AsyncGenerator[AsyncSession, None]:
 # Sync DB session for seeding test data
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture
 def db(engine_sync=engine_sync) -> Session:
     """Synchronous session for inserting seed data visible to the ASGI app."""
@@ -106,6 +105,7 @@ def db(engine_sync=engine_sync) -> Session:
 # ---------------------------------------------------------------------------
 # HTTP client — app gets its own async sessions
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 async def client() -> AsyncGenerator[AsyncClient, None]:

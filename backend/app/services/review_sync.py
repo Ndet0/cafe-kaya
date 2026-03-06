@@ -1,15 +1,15 @@
 """Sync Google reviews into the database with caching."""
+
 import logging
 from datetime import datetime, timedelta, timezone
-
-from sqlalchemy import select
-from sqlalchemy.dialects.postgresql import insert
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import get_settings
 from app.models.review import Review
 from app.models.settings import SiteSettings
 from app.services.google_reviews import fetch_google_reviews
+from sqlalchemy import select
+from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
@@ -88,7 +88,11 @@ async def sync_google_reviews_if_needed(db: AsyncSession) -> bool:
         return True
 
     for r in reviews_data:
-        review_time = datetime.fromtimestamp(r["time"], tz=timezone.utc) if r.get("time") else None
+        review_time = (
+            datetime.fromtimestamp(r["time"], tz=timezone.utc)
+            if r.get("time")
+            else None
+        )
         text = r.get("text") or "—"
         if len(text) > 10000:
             text = text[:10000]

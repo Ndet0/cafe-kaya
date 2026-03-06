@@ -1,8 +1,9 @@
 """Database engine and session."""
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
-from sqlalchemy.orm import DeclarativeBase
 
 from app.config import get_settings
+from sqlalchemy.ext.asyncio import (AsyncSession, async_sessionmaker,
+                                    create_async_engine)
+from sqlalchemy.orm import DeclarativeBase
 
 settings = get_settings()
 
@@ -22,6 +23,7 @@ AsyncSessionLocal = async_sessionmaker(
 
 class Base(DeclarativeBase):
     """SQLAlchemy declarative base."""
+
     pass
 
 

@@ -1,8 +1,8 @@
 """Tests for application configuration."""
-import pytest
-from pydantic import ValidationError
 
+import pytest
 from app.config import Settings, get_settings
+from pydantic import ValidationError
 
 
 def test_missing_google_places_api_key(monkeypatch):
@@ -51,7 +51,12 @@ def test_cors_origins_empty_string_uses_default(monkeypatch):
     get_settings.cache_clear()
     monkeypatch.setenv("CORS_ORIGINS", "")
     settings = get_settings()
-    default = ["http://localhost:8080", "http://localhost:5173", "http://127.0.0.1:8080", "http://127.0.0.1:5173"]
+    default = [
+        "http://localhost:8080",
+        "http://localhost:5173",
+        "http://127.0.0.1:8080",
+        "http://127.0.0.1:5173",
+    ]
     assert settings.cors_origins == default
     get_settings.cache_clear()
 

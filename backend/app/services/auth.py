@@ -1,9 +1,10 @@
 """Auth service: password hashing and JWT."""
+
 from datetime import datetime, timedelta, timezone
-from jose import jwt
-from passlib.context import CryptContext
 
 from app.config import get_settings
+from jose import jwt
+from passlib.context import CryptContext
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 settings = get_settings()
@@ -18,7 +19,9 @@ def verify_password(plain: str, hashed: str) -> bool:
 
 
 def create_access_token(sub: str) -> str:
-    expire = datetime.now(timezone.utc) + timedelta(minutes=settings.access_token_expire_minutes)
+    expire = datetime.now(timezone.utc) + timedelta(
+        minutes=settings.access_token_expire_minutes
+    )
     payload = {"sub": sub, "exp": expire}
     return jwt.encode(
         payload,

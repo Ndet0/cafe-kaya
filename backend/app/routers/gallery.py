@@ -1,18 +1,14 @@
 """Gallery router: list and CRUD images."""
+
+from app.db import get_db
+from app.dependencies import get_current_user
+from app.models.gallery import GalleryImage
+from app.models.user import User
+from app.schemas.gallery import (GalleryImageCreate, GalleryImageResponse,
+                                 GalleryImageUpdate, GalleryReorderRequest)
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.db import get_db
-from app.models.gallery import GalleryImage
-from app.models.user import User
-from app.schemas.gallery import (
-    GalleryImageCreate,
-    GalleryImageUpdate,
-    GalleryImageResponse,
-    GalleryReorderRequest,
-)
-from app.dependencies import get_current_user
 
 router = APIRouter()
 
@@ -20,14 +16,14 @@ router = APIRouter()
 @router.get("", response_model=list[GalleryImageResponse])
 async def list_gallery(db: AsyncSession = Depends(get_db)):
     """List gallery images ordered by sort_order (public)."""
-    result = await db.execute(
-        select(GalleryImage).order_by(GalleryImage.sort_order)
-    )
+    result = await db.execute(select(GalleryImage).order_by(GalleryImage.sort_order))
     images = result.scalars().all()
     return list(images)
 
 
-@router.post("", response_model=GalleryImageResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "", response_model=GalleryImageResponse, status_code=status.HTTP_201_CREATED
+)
 async def create_gallery_image(
     body: GalleryImageCreate,
     db: AsyncSession = Depends(get_db),

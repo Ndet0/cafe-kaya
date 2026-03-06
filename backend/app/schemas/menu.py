@@ -1,6 +1,8 @@
 """Menu and category schemas."""
+
 from decimal import Decimal
 from uuid import UUID
+
 from pydantic import BaseModel
 
 

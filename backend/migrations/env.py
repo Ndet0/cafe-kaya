@@ -1,14 +1,14 @@
 """Alembic environment. Uses sync driver for migrations."""
+
 from logging.config import fileConfig
 
-from sqlalchemy import pool
-from sqlalchemy.engine import Connection
-from sqlalchemy import create_engine
 from alembic import context
-
 from app.config import get_settings
 from app.db import Base
-from app.models import User, Category, MenuItem, GalleryImage, Review, ContactMessage, SiteSettings
+from app.models import (Category, ContactMessage, GalleryImage, MenuItem,
+                        Review, SiteSettings, User)
+from sqlalchemy import create_engine, pool
+from sqlalchemy.engine import Connection
 
 config = context.config
 if config.config_file_name is not None:

@@ -1,16 +1,13 @@
 """Unit tests for Google reviews service."""
+
+import httpx
 import pytest
 import respx
-import httpx
-from httpx import Response
-
 from app.config import get_settings
-from app.services.google_reviews import (
-    GOOGLE_PLACES_DETAILS_URL,
-    fetch_google_reviews,
-    _strip_html,
-    _make_google_review_id,
-)
+from app.services.google_reviews import (GOOGLE_PLACES_DETAILS_URL,
+                                         _make_google_review_id, _strip_html,
+                                         fetch_google_reviews)
+from httpx import Response
 
 
 def test_strip_html():
@@ -248,7 +245,12 @@ async def test_fetch_google_reviews_skips_review_with_missing_rating():
                     "user_ratings_total": 2,
                     "reviews": [
                         {"author_name": "A", "text": "Good", "time": 1700000000},
-                        {"author_name": "B", "text": "Nice", "rating": 5, "time": 1700000000},
+                        {
+                            "author_name": "B",
+                            "text": "Nice",
+                            "rating": 5,
+                            "time": 1700000000,
+                        },
                     ],
                 },
             },
@@ -271,7 +273,12 @@ async def test_fetch_google_reviews_missing_user_ratings_total():
                 "result": {
                     "rating": 4.5,
                     "reviews": [
-                        {"author_name": "U", "text": "Ok", "rating": 4, "time": 1700000000},
+                        {
+                            "author_name": "U",
+                            "text": "Ok",
+                            "rating": 4,
+                            "time": 1700000000,
+                        },
                     ],
                 },
             },

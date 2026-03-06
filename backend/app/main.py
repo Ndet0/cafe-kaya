@@ -1,16 +1,19 @@
 """FastAPI application entry point."""
+
 import logging
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
 )
 logger = logging.getLogger("cafe_kaya")
-from app.routers import auth, menu, gallery, reviews, contact, settings as settings_router, upload as upload_router
+from app.routers import auth, contact, gallery, menu, reviews
+from app.routers import settings as settings_router
+from app.routers import upload as upload_router
 
 config = get_settings()
 
@@ -22,7 +25,9 @@ app = FastAPI(
 )
 
 if config.jwt_secret == "change-me-in-production":
-    logger.warning("JWT_SECRET is using the default value. Set a secure secret in production!")
+    logger.warning(
+        "JWT_SECRET is using the default value. Set a secure secret in production!"
+    )
 
 app.add_middleware(
     CORSMiddleware,

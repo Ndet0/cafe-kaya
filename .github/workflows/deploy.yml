@@ -7,16 +7,15 @@ on:
     branches: [main]
 
 jobs:
+
   frontend:
     name: Frontend Build
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
@@ -39,8 +38,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Build Docker image
         run: docker build -t cafe-kaya-api ./backend
@@ -55,7 +53,6 @@ jobs:
 
           sleep 5
           docker logs cafe-kaya-test
-
           docker stop cafe-kaya-test
           docker rm cafe-kaya-test
 
@@ -64,27 +61,25 @@ jobs:
     name: Backend Tests
     runs-on: ubuntu-latest
 
-services:
-  postgres:
-    image: postgres:16
-    env:
-      POSTGRES_USER: ${{ secrets.TEST_DB_USER }}
-      POSTGRES_PASSWORD: ${{ secrets.TEST_DB_PASSWORD }}
-      POSTGRES_DB: ${{ secrets.TEST_DB_NAME }}
-    ports:
-      - 5432:5432
-    options: >-
-      --health-cmd "pg_isready -U postgres"
-      --health-interval 10s
-      --health-timeout 5s
-      --health-retries 5
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: ${{ secrets.TEST_DB_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.TEST_DB_PASSWORD }}
+          POSTGRES_DB: ${{ secrets.TEST_DB_NAME }}
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
           cache: "pip"
@@ -94,13 +89,14 @@ services:
         run: |
           cd backend
           python -m venv .venv
-          source .venv/bin/activate
-          pip install --upgrade pip
-          pip install -r requirements.txt
+          .venv/bin/python -m pip install --upgrade pip
+          .venv/bin/pip install --no-cache-dir -r requirements.txt
 
-      - name: Wait for Postgres
+      - name: Wait for PostgreSQL
         run: |
-          until pg_isready -h localhost -p 5432; do
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+          until pg_isready -h localhost -p 5432 -U postgres; do
             echo "Waiting for PostgreSQL..."
             sleep 2
           done
@@ -113,5 +109,4 @@ services:
           GOOGLE_PLACES_API_KEY: ${{ secrets.TEST_GOOGLE_PLACES_API_KEY }}
         run: |
           cd backend
-          source .venv/bin/activate
-          pytest tests/ -v --cov=app --cov-branch --cov-fail-under=85
+          .venv/bin/python -m pytest tests/ -v --cov=app --cov-branch --cov-fail-under=85

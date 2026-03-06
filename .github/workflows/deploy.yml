@@ -64,20 +64,20 @@ jobs:
     name: Backend Tests
     runs-on: ubuntu-latest
 
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_USER: ${{ secrets.TEST_DB_USER }}
-          POSTGRES_PASSWORD: ${{ secrets.TEST_DB_PASSWORD }}
-          POSTGRES_DB: ${{ secrets.TEST_DB_NAME }}
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U ${{ secrets.TEST_DB_USER }}"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+services:
+  postgres:
+    image: postgres:16
+    env:
+      POSTGRES_USER: ${{ secrets.TEST_DB_USER }}
+      POSTGRES_PASSWORD: ${{ secrets.TEST_DB_PASSWORD }}
+      POSTGRES_DB: ${{ secrets.TEST_DB_NAME }}
+    ports:
+      - 5432:5432
+    options: >-
+      --health-cmd "pg_isready -U postgres"
+      --health-interval 10s
+      --health-timeout 5s
+      --health-retries 5
 
     steps:
       - name: Checkout repository

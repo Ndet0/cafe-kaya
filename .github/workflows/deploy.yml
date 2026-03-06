@@ -12,9 +12,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
@@ -31,12 +33,14 @@ jobs:
       - name: Build
         run: npm run build
 
+
   backend:
     name: Backend Docker Build
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Build Docker image
         run: docker build -t cafe-kaya-api ./backend
@@ -51,8 +55,10 @@ jobs:
 
           sleep 5
           docker logs cafe-kaya-test
+
           docker stop cafe-kaya-test
           docker rm cafe-kaya-test
+
 
   backend-tests:
     name: Backend Tests
@@ -68,15 +74,17 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd pg_isready
+          --health-cmd "pg_isready -U ${{ secrets.TEST_DB_USER }}"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
           python-version: "3.12"
           cache: "pip"
@@ -86,7 +94,16 @@ jobs:
         run: |
           cd backend
           python -m venv .venv
-          .venv/bin/pip install -r requirements.txt
+          source .venv/bin/activate
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Wait for Postgres
+        run: |
+          until pg_isready -h localhost -p 5432; do
+            echo "Waiting for PostgreSQL..."
+            sleep 2
+          done
 
       - name: Run pytest with coverage
         env:
@@ -96,4 +113,5 @@ jobs:
           GOOGLE_PLACES_API_KEY: ${{ secrets.TEST_GOOGLE_PLACES_API_KEY }}
         run: |
           cd backend
-          .venv/bin/python -m pytest tests/ -v --cov=app --cov-branch --cov-fail-under=85
+          source .venv/bin/activate
+          pytest tests/ -v --cov=app --cov-branch --cov-fail-under=85

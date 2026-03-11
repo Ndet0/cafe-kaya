@@ -329,3 +329,165 @@ async def test_fetch_google_reviews_not_configured(monkeypatch):
     monkeypatch.setenv("GOOGLE_PLACE_ID", "test-place-id")
     monkeypatch.setenv("GOOGLE_PLACES_API_KEY", "REMOVED_GOOGLE_API_KEY")
     get_settings.cache_clear()
+
+
+# ---------------------------------------------------------------------------
+# Additional branch-coverage tests
+# ---------------------------------------------------------------------------
+
+
+def test_strip_html_none_input():
+    """_strip_html returns empty string when given None."""
+    assert _strip_html(None) == ""
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_fetch_reviews_rating_out_of_bounds_clamped():
+    """Rating outside 1-5 is clamped to 5."""
+    respx.get(GOOGLE_PLACES_DETAILS_URL).mock(
+        return_value=Response(
+            200,
+            json={
+                "status": "OK",
+                "result": {
+                    "rating": 4,
+                    "user_ratings_total": 2,
+                    "reviews": [
+                        {
+                            "author_name": "High",
+                            "text": "Over",
+                            "rating": 10,
+                            "time": 1700000000,
+                        },
+                        {
+                            "author_name": "Low",
+                            "text": "Under",
+                            "rating": 0,
+                            "time": 1700000001,
+                        },
+                    ],
+                },
+            },
+        )
+    )
+    result = await fetch_google_reviews()
+    assert result is not None
+    assert result["reviews"][0]["rating"] == 5
+    assert result["reviews"][1]["rating"] == 5
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_fetch_reviews_missing_author_name_defaults_anonymous():
+    """Missing author_name defaults to 'Anonymous'."""
+    respx.get(GOOGLE_PLACES_DETAILS_URL).mock(
+        return_value=Response(
+            200,
+            json={
+                "status": "OK",
+                "result": {
+                    "rating": 4,
+                    "user_ratings_total": 1,
+                    "reviews": [
+                        {"text": "No name", "rating": 5, "time": 1700000000},
+                    ],
+                },
+            },
+        )
+    )
+    result = await fetch_google_reviews()
+    assert result is not None
+    assert result["reviews"][0]["author_name"] == "Anonymous"
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_fetch_reviews_review_text_none():
+    """Review with text=None produces empty string."""
+    respx.get(GOOGLE_PLACES_DETAILS_URL).mock(
+        return_value=Response(
+            200,
+            json={
+                "status": "OK",
+                "result": {
+                    "rating": 4,
+                    "user_ratings_total": 1,
+                    "reviews": [
+                        {
+                            "author_name": "U",
+                            "text": None,
+                            "rating": 4,
+                            "time": 1700000000,
+                        },
+                    ],
+                },
+            },
+        )
+    )
+    result = await fetch_google_reviews()
+    assert result is not None
+    assert result["reviews"][0]["text"] == ""
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_fetch_reviews_no_result_key():
+    """Response with status OK but no 'result' key yields empty reviews."""
+    respx.get(GOOGLE_PLACES_DETAILS_URL).mock(
+        return_value=Response(
+            200,
+            json={"status": "OK"},
+        )
+    )
+    result = await fetch_google_reviews()
+    assert result is not None
+    assert result["reviews"] == []
+    assert result["rating"] == 0.0
+    assert result["user_ratings_total"] == 0
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_fetch_reviews_rating_none_in_result():
+    """When outer result rating is None, returns 0.0."""
+    respx.get(GOOGLE_PLACES_DETAILS_URL).mock(
+        return_value=Response(
+            200,
+            json={
+                "status": "OK",
+                "result": {
+                    "user_ratings_total": 0,
+                    "reviews": [],
+                },
+            },
+        )
+    )
+    result = await fetch_google_reviews()
+    assert result is not None
+    assert result["rating"] == 0.0
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_fetch_reviews_unrecognized_status():
+    """An unrecognized status (not in the known error list) still returns None."""
+    respx.get(GOOGLE_PLACES_DETAILS_URL).mock(
+        return_value=Response(
+            200,
+            json={"status": "SOME_NEW_ERROR"},
+        )
+    )
+    result = await fetch_google_reviews()
+    assert result is None
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_fetch_reviews_generic_http_error():
+    """Generic httpx.HTTPError (not timeout) returns None."""
+    respx.get(GOOGLE_PLACES_DETAILS_URL).mock(
+        side_effect=httpx.ConnectError("connection refused")
+    )
+    result = await fetch_google_reviews()
+    assert result is None

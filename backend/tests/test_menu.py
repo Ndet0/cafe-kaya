@@ -267,3 +267,73 @@ async def test_delete_menu_item_not_found(
 async def test_delete_menu_item_unauthenticated(client: AsyncClient):
     r = await client.delete(f"/api/menu/{uuid.uuid4()}")
     assert r.status_code == 401
+
+
+# ---------------------------------------------------------------------------
+# Additional branch-coverage tests
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_list_menu_items_excludes_unavailable(
+    client: AsyncClient, db: Session
+):
+    """Items with is_available=False are filtered out of the public list."""
+    cat = _create_category(db)
+    available = _create_item(db, cat, "Available Latte", 4.00)
+    unavailable = MenuItem(
+        name="Hidden Mocha",
+        description="Unavailable",
+        price=5.00,
+        category_id=cat.id,
+        image_url=None,
+        sort_order=0,
+        is_available=False,
+    )
+    db.add(unavailable)
+    db.commit()
+
+    r = await client.get("/api/menu")
+    assert r.status_code == 200
+    names = [i["name"] for i in r.json()]
+    assert "Available Latte" in names
+    assert "Hidden Mocha" not in names
+
+
+@pytest.mark.asyncio
+async def test_update_menu_item_bad_category(
+    client: AsyncClient, db: Session, admin_user, auth_headers
+):
+    """Updating a menu item with a non-existent category_id returns 400."""
+    cat = _create_category(db)
+    item = _create_item(db, cat)
+    r = await client.put(
+        f"/api/menu/{item.id}",
+        json={"category_id": str(uuid.uuid4())},
+        headers=auth_headers,
+    )
+    assert r.status_code == 400
+    assert "Category not found" in r.json()["detail"]
+
+
+@pytest.mark.asyncio
+async def test_create_menu_item_minimal_fields(
+    client: AsyncClient, db: Session, admin_user, auth_headers
+):
+    """Creating a menu item with only required fields succeeds."""
+    cat = _create_category(db)
+    r = await client.post(
+        "/api/menu",
+        json={
+            "name": "Minimal Item",
+            "price": 2.50,
+            "category_id": cat.id,
+        },
+        headers=auth_headers,
+    )
+    assert r.status_code == 200
+    data = r.json()
+    assert data["name"] == "Minimal Item"
+    assert data["description"] is None
+    assert data["image_url"] is None
+    assert data["is_available"] is True

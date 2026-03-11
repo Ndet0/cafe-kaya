@@ -389,3 +389,165 @@ async def test_sync_returns_false_when_google_not_configured(async_db, monkeypat
     monkeypatch.setenv("GOOGLE_PLACE_ID", "test-place-id")
     monkeypatch.setenv("GOOGLE_PLACES_API_KEY", "REMOVED_GOOGLE_API_KEY")
     get_settings.cache_clear()
+
+
+# ---------------------------------------------------------------------------
+# Additional branch-coverage tests
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_get_last_synced_naive_datetime_gets_utc(async_db):
+    """When Review.last_synced_at has no tzinfo, UTC is attached."""
+    naive = datetime(2024, 1, 15, 10, 0, 0)
+    async_db.add(
+        Review(
+            name="Naive",
+            email=None,
+            text="x",
+            rating=5,
+            status="approved",
+            source="google",
+            google_review_id="naive1",
+            last_synced_at=naive,
+        )
+    )
+    await async_db.commit()
+
+    result = await _get_last_synced(async_db)
+    assert result is not None
+    assert result.tzinfo is not None
+    assert result.tzinfo == timezone.utc
+
+
+@pytest.mark.asyncio
+async def test_get_last_synced_site_settings_value_none(async_db):
+    """SiteSettings row with value=None returns None from _get_last_synced."""
+    async_db.add(SiteSettings(key=GOOGLE_SYNC_KEY, value=None))
+    await async_db.commit()
+
+    result = await _get_last_synced(async_db)
+    assert result is None
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_sync_review_with_no_time_field(async_db):
+    """Review with time=0 (falsy) produces review_time=None."""
+    respx.get(GOOGLE_PLACES_DETAILS_URL).mock(
+        return_value=Response(
+            200,
+            json={
+                "status": "OK",
+                "result": {
+                    "rating": 4,
+                    "user_ratings_total": 1,
+                    "reviews": [
+                        {
+                            "author_name": "NoTime",
+                            "text": "Missing time",
+                            "rating": 4,
+                            "time": 0,
+                        },
+                    ],
+                },
+            },
+        )
+    )
+    result = await sync_google_reviews_if_needed(async_db)
+    assert result is True
+
+    rows = (
+        (await async_db.execute(select(Review).where(Review.name == "NoTime")))
+        .scalars()
+        .all()
+    )
+    assert len(rows) == 1
+    assert rows[0].review_time is None
+
+
+@pytest.mark.asyncio
+async def test_sync_review_with_very_long_text_truncated(async_db):
+    """Review text longer than 10000 chars is truncated to 10000."""
+    long_text = "A" * 15000
+    mock_data = {
+        "rating": 4.0,
+        "user_ratings_total": 1,
+        "reviews": [
+            {
+                "google_review_id": "long_text_review",
+                "author_name": "LongWriter",
+                "text": long_text,
+                "rating": 5,
+                "time": 1700000000,
+            },
+        ],
+    }
+
+    with patch(
+        "app.services.review_sync.fetch_google_reviews", return_value=mock_data
+    ):
+        result = await sync_google_reviews_if_needed(async_db)
+    assert result is True
+
+    rows = (
+        (await async_db.execute(select(Review).where(Review.name == "LongWriter")))
+        .scalars()
+        .all()
+    )
+    assert len(rows) == 1
+    assert len(rows[0].text) == 10000
+
+
+@pytest.mark.asyncio
+async def test_set_google_rating_info_creates_new_rows(async_db):
+    """_set_google_rating_info inserts new SiteSettings when they don't exist."""
+    from app.services.review_sync import (GOOGLE_RATING_KEY, GOOGLE_TOTAL_KEY,
+                                          _set_google_rating_info)
+
+    await _set_google_rating_info(async_db, 4.7, 120)
+    await async_db.commit()
+
+    rating_row = (
+        await async_db.execute(
+            select(SiteSettings).where(SiteSettings.key == GOOGLE_RATING_KEY)
+        )
+    ).scalar_one_or_none()
+    total_row = (
+        await async_db.execute(
+            select(SiteSettings).where(SiteSettings.key == GOOGLE_TOTAL_KEY)
+        )
+    ).scalar_one_or_none()
+
+    assert rating_row is not None
+    assert rating_row.value == "4.7"
+    assert total_row is not None
+    assert total_row.value == "120"
+
+
+@pytest.mark.asyncio
+async def test_set_google_rating_info_updates_existing_rows(async_db):
+    """_set_google_rating_info updates existing SiteSettings rows."""
+    from app.services.review_sync import (GOOGLE_RATING_KEY, GOOGLE_TOTAL_KEY,
+                                          _set_google_rating_info)
+
+    async_db.add(SiteSettings(key=GOOGLE_RATING_KEY, value="3.0"))
+    async_db.add(SiteSettings(key=GOOGLE_TOTAL_KEY, value="50"))
+    await async_db.commit()
+
+    await _set_google_rating_info(async_db, 4.9, 200)
+    await async_db.commit()
+
+    rating_row = (
+        await async_db.execute(
+            select(SiteSettings).where(SiteSettings.key == GOOGLE_RATING_KEY)
+        )
+    ).scalar_one()
+    total_row = (
+        await async_db.execute(
+            select(SiteSettings).where(SiteSettings.key == GOOGLE_TOTAL_KEY)
+        )
+    ).scalar_one()
+
+    assert rating_row.value == "4.9"
+    assert total_row.value == "200"

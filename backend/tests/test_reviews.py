@@ -559,3 +559,97 @@ async def test_delete_review_not_found(client: AsyncClient, admin_user, auth_hea
 async def test_delete_review_unauthenticated(client: AsyncClient):
     r = await client.delete(f"/api/reviews/{uuid.uuid4()}")
     assert r.status_code == 401
+
+
+# ---------------------------------------------------------------------------
+# Additional branch-coverage tests
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_list_reviews_fallback_to_db_aggregation(
+    client: AsyncClient, db: Session
+):
+    """When SiteSettings total_reviews is 0, falls back to DB avg/count."""
+    respx.get(GOOGLE_PLACES_DETAILS_URL).mock(
+        return_value=Response(
+            200,
+            json={
+                "status": "OK",
+                "result": {"rating": 0, "user_ratings_total": 0, "reviews": []},
+            },
+        )
+    )
+    _create_review(db, name="A", rating=4, status="approved")
+    _create_review(db, name="B", rating=5, status="approved")
+    db.add(SiteSettings(key="google_reviews_rating", value="0"))
+    db.add(SiteSettings(key="google_reviews_total", value="0"))
+    db.commit()
+
+    r = await client.get("/api/reviews")
+    assert r.status_code == 200
+    data = r.json()
+    assert data["total_reviews"] == 2
+    assert data["rating"] == 4.5
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_list_reviews_source_field_values(client: AsyncClient, db: Session):
+    """Reviews show correct source field: 'local' for website, 'google' for google."""
+    from datetime import datetime, timezone
+
+    recent = datetime.now(timezone.utc)
+    db.add(
+        Review(
+            name="Local User",
+            email="l@t.com",
+            text="Local review",
+            rating=5,
+            status="approved",
+            source="website",
+        )
+    )
+    db.add(
+        Review(
+            name="Google User",
+            email=None,
+            text="Google review",
+            rating=4,
+            status="approved",
+            source="google",
+            google_review_id="src_test_g1",
+            last_synced_at=recent,
+        )
+    )
+    db.add(SiteSettings(key="google_reviews_rating", value="4.5"))
+    db.add(SiteSettings(key="google_reviews_total", value="10"))
+    db.commit()
+
+    r = await client.get("/api/reviews")
+    assert r.status_code == 200
+    data = r.json()
+    sources = {rv["name"]: rv.get("source") for rv in data["reviews"]}
+    assert sources["Local User"] == "local"
+    assert sources["Google User"] == "google"
+
+
+@pytest.mark.asyncio
+async def test_submit_review_rating_zero_rejected(client: AsyncClient):
+    """Rating=0 violates ge=1 constraint and returns 422."""
+    r = await client.post(
+        "/api/reviews",
+        json={"name": "Zero", "text": "Bad", "rating": 0},
+    )
+    assert r.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_submit_review_missing_name(client: AsyncClient):
+    """Missing required 'name' field returns 422."""
+    r = await client.post(
+        "/api/reviews",
+        json={"text": "No name", "rating": 3},
+    )
+    assert r.status_code == 422

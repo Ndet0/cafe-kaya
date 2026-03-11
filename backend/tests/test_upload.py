@@ -142,3 +142,37 @@ async def test_upload_file_upload_sync_path(mock_settings):
     ):
         result = await upload_file(b"imagedata", "photo.jpg", folder="test-folder")
     assert result == "https://res.cloudinary.com/demo/uploaded.jpg"
+
+
+# ---------------------------------------------------------------------------
+# Additional branch-coverage tests
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+@patch("app.services.upload.settings")
+async def test_upload_file_returns_none_partial_config(mock_settings):
+    """upload_file returns None when only some Cloudinary vars are set."""
+    mock_settings.cloudinary_cloud_name = "test"
+    mock_settings.cloudinary_api_key = None
+    mock_settings.cloudinary_api_secret = "secret"
+    result = await upload_file(b"data", "test.jpg")
+    assert result is None
+
+
+@pytest.mark.asyncio
+@patch("app.services.upload.settings")
+async def test_upload_sync_missing_secure_url_key(mock_settings):
+    """_upload_sync returns None when Cloudinary response lacks secure_url."""
+    mock_settings.cloudinary_cloud_name = "test"
+    mock_settings.cloudinary_api_key = "key"
+    mock_settings.cloudinary_api_secret = "secret"
+    import cloudinary.uploader
+
+    with patch.object(
+        cloudinary.uploader,
+        "upload",
+        return_value={"public_id": "abc123"},
+    ):
+        result = await upload_file(b"imagedata", "photo.jpg")
+    assert result is None

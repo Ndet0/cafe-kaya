@@ -7,9 +7,14 @@ from sqlalchemy.orm import DeclarativeBase
 
 settings = get_settings()
 
+_connect_args: dict = {}
+if settings.database_url_async.startswith("sqlite"):
+    _connect_args["check_same_thread"] = False
+
 engine = create_async_engine(
     settings.database_url_async,
     echo=settings.debug,
+    connect_args=_connect_args,
 )
 
 AsyncSessionLocal = async_sessionmaker(

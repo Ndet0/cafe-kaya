@@ -8,7 +8,6 @@ from app.models.review import Review
 from app.models.settings import SiteSettings
 from app.services.google_reviews import fetch_google_reviews
 from sqlalchemy import select
-from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
@@ -28,6 +27,8 @@ async def _get_last_synced(db: AsyncSession) -> datetime | None:
     )
     last_synced = result.scalar_one_or_none()
     if last_synced is not None:
+        if last_synced.tzinfo is None:
+            last_synced = last_synced.replace(tzinfo=timezone.utc)
         return last_synced
     # Fallback: site_settings when no Google reviews exist yet
     result = await db.execute(
@@ -97,30 +98,34 @@ async def sync_google_reviews_if_needed(db: AsyncSession) -> bool:
         if len(text) > 10000:
             text = text[:10000]
 
-        stmt = insert(Review).values(
-            google_review_id=r["google_review_id"],
-            name=r["author_name"],
-            email=None,
-            text=text,
-            rating=r["rating"],
-            status="approved",
-            source="google",
-            profile_photo_url=r.get("profile_photo_url"),
-            review_time=review_time,
-            last_synced_at=now,
+        result = await db.execute(
+            select(Review).where(
+                Review.google_review_id == r["google_review_id"]
+            )
         )
-        stmt = stmt.on_conflict_do_update(
-            index_elements=["google_review_id"],
-            set_={
-                "name": stmt.excluded.name,
-                "text": stmt.excluded.text,
-                "rating": stmt.excluded.rating,
-                "profile_photo_url": stmt.excluded.profile_photo_url,
-                "review_time": stmt.excluded.review_time,
-                "last_synced_at": now,
-            },
-        )
-        await db.execute(stmt)
+        existing = result.scalar_one_or_none()
+        if existing:
+            existing.name = r["author_name"]
+            existing.text = text
+            existing.rating = r["rating"]
+            existing.profile_photo_url = r.get("profile_photo_url")
+            existing.review_time = review_time
+            existing.last_synced_at = now
+        else:
+            db.add(
+                Review(
+                    google_review_id=r["google_review_id"],
+                    name=r["author_name"],
+                    email=None,
+                    text=text,
+                    rating=r["rating"],
+                    status="approved",
+                    source="google",
+                    profile_photo_url=r.get("profile_photo_url"),
+                    review_time=review_time,
+                    last_synced_at=now,
+                )
+            )
 
     await _set_google_rating_info(db, rating, total)
     await db.commit()

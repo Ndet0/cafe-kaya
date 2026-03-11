@@ -4,8 +4,8 @@ import uuid
 from datetime import datetime
 
 from app.db import Base
-from sqlalchemy import DateTime, String, Text
-from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy import JSON, DateTime, String, Text
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 
@@ -19,7 +19,7 @@ class SiteSettings(Base):
         String(100), unique=True, nullable=False, index=True
     )
     value: Mapped[str | None] = mapped_column(Text, nullable=True)
-    value_json: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    value_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow
     )

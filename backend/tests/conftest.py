@@ -1,34 +1,40 @@
-"""Pytest fixtures: isolated test DB, async client, auth helpers.
+"""Pytest fixtures: isolated SQLite test DB, async client, auth helpers.
 
-Strategy: use the *synchronous* engine (psycopg2) for all test-data seeding
-and cleanup, so the async connection pool used by the ASGI app never conflicts
-with test infrastructure operations.
+Strategy: use file-based SQLite so that the synchronous engine (for test-data
+seeding/cleanup) and the asynchronous engine (used by the ASGI app) share the
+same database.
 """
 
 import os
+import pathlib
 from typing import AsyncGenerator
 
 import pytest
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
 from sqlalchemy.ext.asyncio import (AsyncSession, async_sessionmaker,
                                     create_async_engine)
 from sqlalchemy.orm import Session
-from sqlalchemy.pool import NullPool
+
+# ---------------------------------------------------------------------------
+# SQLite test database paths
+# ---------------------------------------------------------------------------
+
+_TEST_DIR = pathlib.Path(__file__).resolve().parent
+_TEST_DB = _TEST_DIR / "test.db"
+TEST_DB_SYNC = f"sqlite:///{_TEST_DB}"
+TEST_DB_ASYNC = f"sqlite+aiosqlite:///{_TEST_DB}"
 
 # Point settings at test env before any app import
-# CI workflow sets CAFE_DATABASE_URL; local dev uses docker-compose default
-if "CAFE_DATABASE_URL" not in os.environ:
-    os.environ["CAFE_DATABASE_URL"] = "postgresql+asyncpg://REMOVED_TEST_DB"
+os.environ["CAFE_DATABASE_URL"] = TEST_DB_ASYNC
 os.environ["JWT_SECRET"] = "test-secret-key-not-for-production"
 os.environ["JWT_ALGORITHM"] = "HS256"
-# Dummy Google config so sync path runs; respx mocks the API in tests
 os.environ["GOOGLE_PLACE_ID"] = "test-place-id"
-os.environ["GOOGLE_PLACES_API_KEY"] = "REMOVED_GOOGLE_API_KEY"
+os.environ["GOOGLE_PLACES_API_KEY"] = "test-google-api-key"
 
+# Import all model modules so Base.metadata knows every table
 import app.models.contact  # noqa: F401, E402
 import app.models.gallery  # noqa: F401, E402
-# Import all model modules so Base.metadata knows every table
 import app.models.menu  # noqa: F401, E402
 import app.models.review  # noqa: F401, E402
 import app.models.settings  # noqa: F401, E402
@@ -37,11 +43,21 @@ from app.main import app as fastapi_app  # noqa: E402
 from app.models.user import User  # noqa: E402
 from app.services.auth import create_access_token, hash_password  # noqa: E402
 
-TEST_DB_ASYNC = os.environ["CAFE_DATABASE_URL"]
-TEST_DB_SYNC = TEST_DB_ASYNC.replace("+asyncpg", "+psycopg2")
+# ---------------------------------------------------------------------------
+# Engines and session factory
+# ---------------------------------------------------------------------------
 
-engine_sync = create_engine(TEST_DB_SYNC, echo=False)
-engine_async = create_async_engine(TEST_DB_ASYNC, echo=False, poolclass=NullPool)
+engine_sync = create_engine(
+    TEST_DB_SYNC,
+    connect_args={"check_same_thread": False},
+    echo=False,
+)
+
+engine_async = create_async_engine(
+    TEST_DB_ASYNC,
+    connect_args={"check_same_thread": False},
+    echo=False,
+)
 
 TestAsyncSession = async_sessionmaker(
     engine_async,
@@ -50,6 +66,14 @@ TestAsyncSession = async_sessionmaker(
     autocommit=False,
     autoflush=False,
 )
+
+
+# Enable foreign-key enforcement on every SQLite connection
+@event.listens_for(engine_sync, "connect")
+def _set_sqlite_pragma(dbapi_connection, connection_record):
+    cursor = dbapi_connection.cursor()
+    cursor.execute("PRAGMA foreign_keys = ON")
+    cursor.close()
 
 
 # ---------------------------------------------------------------------------
@@ -63,6 +87,9 @@ def _create_tables():
     yield
     Base.metadata.drop_all(bind=engine_sync)
     engine_sync.dispose()
+    for suffix in ("", "-wal", "-shm"):
+        p = pathlib.Path(str(_TEST_DB) + suffix)
+        p.unlink(missing_ok=True)
 
 
 # ---------------------------------------------------------------------------

@@ -20,10 +20,7 @@ class Settings(BaseSettings):
 
     # Database (PostgreSQL). Must use async driver for the app.
     # Uses CAFE_DATABASE_URL to avoid collisions with system-level DATABASE_URL.
-    database_url: str = Field(
-        default="postgresql+asyncpg://postgres:postgres@localhost:5432/cafe_kaya",
-        validation_alias="CAFE_DATABASE_URL",
-    )
+    database_url: str = Field(validation_alias="CAFE_DATABASE_URL")
 
     @property
     def database_url_async(self) -> str:
@@ -33,8 +30,11 @@ class Settings(BaseSettings):
             return url.replace("postgresql://", "postgresql+asyncpg://", 1)
         return url
 
-    # JWT
-    jwt_secret: str = "change-me-in-production"
+    # JWT (set JWT_SECRET in environment; use at least 32 random bytes/characters)
+    jwt_secret: str = Field(
+        validation_alias="JWT_SECRET",
+        min_length=32,
+    )
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 60 * 24  # 24 hours
 

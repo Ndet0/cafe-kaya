@@ -24,11 +24,6 @@ app = FastAPI(
     redoc_url="/redoc" if config.debug else None,
 )
 
-if config.jwt_secret == "change-me-in-production":
-    logger.warning(
-        "JWT_SECRET is using the default value. Set a secure secret in production!"
-    )
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=config.cors_origins,

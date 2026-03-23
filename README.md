@@ -199,8 +199,8 @@ The frontend will be available at `http://localhost:8080`.
 | ---------------------------- | ------------------------------------------ | -------------------------------------------------------- |
 | `APP_NAME`                   | Application name                           | `Cafe Kaya API`                                          |
 | `DEBUG`                      | Enable debug mode                          | `false`                                                  |
-| `CAFE_DATABASE_URL`          | PostgreSQL connection string (async)       | `postgresql+asyncpg://postgres:postgres@localhost:5432/cafe_kaya` |
-| `JWT_SECRET`                 | Secret key for signing JWT tokens          | *(generate a secure random string)*                      |
+| `CAFE_DATABASE_URL`          | PostgreSQL connection string (async); **required** | `postgresql+asyncpg://USER:PASSWORD@localhost:5432/DBNAME` |
+| `JWT_SECRET`                 | Secret key for signing JWT tokens; **required**, min. 32 characters | *(generate a long random string)*                      |
 | `JWT_ALGORITHM`              | JWT signing algorithm                      | `HS256`                                                  |
 | `ACCESS_TOKEN_EXPIRE_MINUTES`| Token expiration in minutes                | `1440`                                                   |
 | `CORS_ORIGINS`               | Allowed origins (comma-separated)          | `http://localhost:8080,http://localhost:5173`             |

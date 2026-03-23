@@ -1,0 +1,31 @@
+# Render Blueprint: https://docs.render.com/infrastructure-as-code
+# Web service URL: https://cafe-kaya-api.onrender.com (matches service name below).
+# After first successful deploy, use Render Shell on this service and run:
+#   python -m scripts.create_admin admin@cafekaya.com yourpassword
+# If your frontend lives at a different URL, update CORS_ORIGINS in the dashboard
+# or change the value here and sync the Blueprint.
+
+databases:
+  - name: cafe-kaya-db
+    plan: free
+    databaseName: cafe_kaya
+
+services:
+  - type: web
+    name: cafe-kaya-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    preDeployCommand: alembic upgrade head
+    envVars:
+      - key: CAFE_DATABASE_URL
+        fromDatabase:
+          name: cafe-kaya-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DEBUG
+        value: "false"
+      - key: CORS_ORIGINS
+        value: "https://cafe-kaya.onrender.com"

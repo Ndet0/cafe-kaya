@@ -71,7 +71,7 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U postgres"
+          --health-cmd "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -94,10 +94,12 @@ jobs:
           python -m pip install --no-cache-dir -r requirements.txt
 
       - name: Wait for PostgreSQL
+        env:
+          PGUSER: ${{ secrets.TEST_DB_USER }}
         run: |
           sudo apt-get update
           sudo apt-get install -y postgresql-client
-          until pg_isready -h localhost -p 5432 -U postgres; do
+          until pg_isready -h localhost -p 5432; do
             echo "Waiting for PostgreSQL..."
             sleep 2
           done

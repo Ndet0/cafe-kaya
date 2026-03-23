@@ -25,14 +25,27 @@ async function request<T>(
     ? `${baseURL}${path}?${new URLSearchParams(params).toString()}`
     : `${baseURL}${path}`;
   const token = skipAuth ? null : getStoredToken();
-  const res = await fetch(url, {
-    ...init,
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...init.headers,
-    },
-  });
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      ...init,
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...init.headers,
+      },
+    });
+  } catch (e) {
+    if (e instanceof TypeError) {
+      const devHint = import.meta.env.DEV
+        ? baseURL
+          ? ` In dev, clear VITE_API_URL so /api is proxied to localhost:8000 (currently ${baseURL}).`
+          : " Ensure uvicorn is running on port 8000 and you use the Vite dev server (proxy)."
+        : " Check VITE_API_URL and CORS on the API.";
+      throw new Error(`Cannot reach API (${url}).${devHint}`);
+    }
+    throw e;
+  }
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: res.statusText }));
     throw new Error(typeof err.detail === "string" ? err.detail : JSON.stringify(err));

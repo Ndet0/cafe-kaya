@@ -3,12 +3,13 @@
 from uuid import UUID
 
 from app.db import get_db
-from app.dependencies import get_current_user
+from app.dependencies import get_current_user, security
 from app.models.menu import Category, MenuItem
 from app.models.user import User
 from app.schemas.menu import (CategoryCreate, CategoryResponse, MenuItemCreate,
                               MenuItemResponse, MenuItemUpdate)
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -29,14 +30,19 @@ async def list_categories(db: AsyncSession = Depends(get_db)):
 @router.get("", response_model=list[MenuItemResponse])
 async def list_menu_items(
     category: UUID | None = Query(None, description="Filter by category id"),
+    include_unavailable: bool = Query(False),
     db: AsyncSession = Depends(get_db),
+    credentials: HTTPAuthorizationCredentials | None = Depends(security),
 ):
-    """List menu items, optionally filtered by category (public)."""
-    q = (
-        select(MenuItem)
-        .where(MenuItem.is_available == True)
-        .order_by(MenuItem.sort_order, MenuItem.name)
-    )
+    """List menu items, optionally filtered by category (public).
+
+    include_unavailable requires a valid admin token and returns hidden items.
+    """
+    if include_unavailable:
+        await get_current_user(db, credentials)
+    q = select(MenuItem).order_by(MenuItem.sort_order, MenuItem.name)
+    if not include_unavailable:
+        q = q.where(MenuItem.is_available == True)
     if category:
         q = q.where(MenuItem.category_id == str(category))
     q = q.options(selectinload(MenuItem.category))

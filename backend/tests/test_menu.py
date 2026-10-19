@@ -301,6 +301,42 @@ async def test_list_menu_items_excludes_unavailable(
 
 
 @pytest.mark.asyncio
+async def test_list_menu_items_include_unavailable_requires_auth(
+    client: AsyncClient, db: Session, admin_user, auth_headers
+):
+    """Hidden items are returned only when an admin asks for them."""
+    cat = _create_category(db)
+    _create_item(db, cat, "Available Latte", 4.00)
+    hidden = MenuItem(
+        name="Hidden Mocha",
+        description="Unavailable",
+        price=5.00,
+        category_id=cat.id,
+        image_url=None,
+        sort_order=0,
+        is_available=False,
+    )
+    db.add(hidden)
+    db.commit()
+
+    public = await client.get("/api/menu")
+    assert "Hidden Mocha" not in [i["name"] for i in public.json()]
+
+    denied = await client.get("/api/menu", params={"include_unavailable": "true"})
+    assert denied.status_code == 401
+
+    allowed = await client.get(
+        "/api/menu",
+        params={"include_unavailable": "true"},
+        headers=auth_headers,
+    )
+    assert allowed.status_code == 200
+    names = [i["name"] for i in allowed.json()]
+    assert "Available Latte" in names
+    assert "Hidden Mocha" in names
+
+
+@pytest.mark.asyncio
 async def test_update_menu_item_bad_category(
     client: AsyncClient, db: Session, admin_user, auth_headers
 ):

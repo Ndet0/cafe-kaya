@@ -19,15 +19,46 @@ describe("LocationSection", () => {
     expect(screen.getByText(/Slip Road Off Waiyaki Way/)).toBeInTheDocument();
   });
 
-  it("renders the phone number", () => {
+  it("renders the phone number from settings", async () => {
     render(<LocationSection />);
-    expect(screen.getByText("+254 710 767717")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText("+254710767717")).toBeInTheDocument();
+    });
   });
 
-  it("renders opening hours", () => {
+  it("renders opening hours from settings", async () => {
     render(<LocationSection />);
+    await waitFor(() => {
+      expect(screen.getByText("Mon-Sat 9-10, Sun 9-9:30")).toBeInTheDocument();
+    });
+  });
+
+  it("falls back to default contact details when settings are empty", async () => {
+    const { http, HttpResponse } = await import("msw");
+    const { server } = await import("@/test/mocks/server");
+    server.use(
+      http.get("/api/settings/contact", () =>
+        HttpResponse.json({
+          address: "",
+          phone: " ",
+          hours: null,
+          map_embed_url: "http://insecure.example/map",
+          instagram_url: "",
+          facebook_url: null,
+          twitter_url: null,
+        }),
+      ),
+    );
+    render(<LocationSection />);
+    await waitFor(() => {
+      expect(screen.getByText("+254 710 767717")).toBeInTheDocument();
+    });
     expect(screen.getByText(/Sunday: 9:00 AM/)).toBeInTheDocument();
     expect(screen.getByText(/Monday – Saturday/)).toBeInTheDocument();
+    expect(screen.getByTitle("Cafe Kaya Location")).toHaveAttribute(
+      "src",
+      expect.stringContaining("google.com/maps/embed"),
+    );
   });
 
   it("renders Get Directions link", () => {

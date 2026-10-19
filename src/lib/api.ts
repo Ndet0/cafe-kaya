@@ -200,10 +200,16 @@ export function createMenuCategory(data: MenuCategoryCreateInput): Promise<Categ
   });
 }
 
-export function getMenu(category?: string): Promise<MenuItemResponse[]> {
+export function getMenu(
+  category?: string,
+  options?: { includeUnavailable?: boolean }
+): Promise<MenuItemResponse[]> {
+  const params: Record<string, string> = {};
+  if (category) params.category = category;
+  if (options?.includeUnavailable) params.include_unavailable = "true";
   return request<MenuItemResponse[]>(
     "/api/menu",
-    category ? { params: { category } } : {}
+    Object.keys(params).length ? { params } : {}
   );
 }
 

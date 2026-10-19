@@ -17,7 +17,10 @@ const formatDate = (dateValue: string | null | undefined) => {
 };
 
 const AdminOverview = () => {
-  const { data: menuItems = [] } = useQuery({ queryKey: ["admin", "menu-items"], queryFn: () => getMenu() });
+  const { data: menuItems = [] } = useQuery({
+    queryKey: ["admin", "menu-items"],
+    queryFn: () => getMenu(undefined, { includeUnavailable: true }),
+  });
   const { data: galleryItems = [] } = useQuery({ queryKey: ["admin", "gallery-items"], queryFn: getGallery });
   const { data: messages = [] } = useQuery({ queryKey: ["admin", "messages"], queryFn: getContactMessages });
   const { data: pendingReviews = [] } = useQuery({

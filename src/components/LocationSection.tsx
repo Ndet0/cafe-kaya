@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { MapPin, Phone, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { submitContact } from "@/lib/api";
+import { useContactDisplay } from "@/lib/contactDisplay";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -27,6 +28,7 @@ const contactSchema = z.object({
 type ContactFormValues = z.infer<typeof contactSchema>;
 
 const LocationSection = () => {
+  const contact = useContactDisplay();
   const form = useForm<ContactFormValues>({
     resolver: zodResolver(contactSchema),
     defaultValues: { name: "", email: "", message: "" },
@@ -67,7 +69,7 @@ const LocationSection = () => {
         >
           <iframe
             title="Cafe Kaya Location"
-            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3988.818!2d36.812!3d-1.264!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMcKwMTUnNTAuNCJTIDM2wrA0OCc0My4yIkU!5e0!3m2!1sen!2ske!4v1700000000000!5m2!1sen!2ske"
+            src={contact.mapEmbedUrl}
             width="100%"
             height="100%"
             style={{ border: 0 }}
@@ -91,9 +93,8 @@ const LocationSection = () => {
             </div>
             <div>
               <h3 className="font-display text-lg font-semibold text-foreground mb-1">Address</h3>
-              <p className="text-muted-foreground text-sm">
-                Slip Road Off Waiyaki Way after Westlands Roundabout,<br />
-                Nairobi City, Kenya
+              <p className="text-muted-foreground text-sm whitespace-pre-line">
+                {contact.address}
               </p>
             </div>
           </div>
@@ -104,8 +105,8 @@ const LocationSection = () => {
             </div>
             <div>
               <h3 className="font-display text-lg font-semibold text-foreground mb-1">Phone</h3>
-              <a href="tel:+254710767717" className="text-primary font-medium hover:underline">
-                +254 710 767717
+              <a href={contact.phoneHref} className="text-primary font-medium hover:underline">
+                {contact.phone}
               </a>
             </div>
           </div>
@@ -117,8 +118,9 @@ const LocationSection = () => {
             <div>
               <h3 className="font-display text-lg font-semibold text-foreground mb-1">Opening Hours</h3>
               <div className="text-muted-foreground text-sm space-y-1">
-                <p>Sunday: 9:00 AM – 9:30 PM</p>
-                <p>Monday – Saturday: 9:00 AM – 10:00 PM</p>
+                {contact.hoursLines.map((line) => (
+                  <p key={line}>{line}</p>
+                ))}
               </div>
             </div>
           </div>
@@ -134,7 +136,7 @@ const LocationSection = () => {
               Get Directions
             </a>
             <a
-              href="tel:+254710767717"
+              href={contact.phoneHref}
               className="inline-flex items-center gap-2 border-2 border-primary text-primary px-6 py-3 rounded-full font-semibold text-sm hover:bg-primary/5 transition-colors"
             >
               <Phone className="w-4 h-4" />

@@ -39,7 +39,10 @@ const AdminMenuPage = () => {
   const [menuForm, setMenuForm] = useState<MenuItemCreateInput>(emptyMenuForm);
 
   const { data: categories = [] } = useQuery({ queryKey: ["admin", "menu-categories"], queryFn: getMenuCategories });
-  const { data: menuItems = [] } = useQuery({ queryKey: ["admin", "menu-items"], queryFn: () => getMenu() });
+  const { data: menuItems = [] } = useQuery({
+    queryKey: ["admin", "menu-items"],
+    queryFn: () => getMenu(undefined, { includeUnavailable: true }),
+  });
 
   const groupedItems = useMemo(() => {
     return categories.map((category) => ({

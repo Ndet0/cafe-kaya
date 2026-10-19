@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Menu, X, Phone } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useContactDisplay } from "@/lib/contactDisplay";
 
 const navLinks = [
   { label: "Home", href: "#home" },
@@ -16,6 +17,7 @@ const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user, logout } = useAuth();
+  const contact = useContactDisplay();
   const location = useLocation();
   const navigate = useNavigate();
   const isHome = location.pathname === "/";
@@ -97,7 +99,7 @@ const Navbar = () => {
               </Link>
             )}
             <a
-              href="tel:+254710767717"
+              href={contact.phoneHref}
               className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-5 py-2.5 rounded-full text-sm font-semibold hover:opacity-90 transition-opacity"
             >
               <Phone className="w-4 h-4" />
@@ -176,7 +178,7 @@ const Navbar = () => {
               </Link>
             )}
             <a
-              href="tel:+254710767717"
+              href={contact.phoneHref}
               className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-5 py-2.5 rounded-full text-sm font-semibold"
             >
               <Phone className="w-4 h-4" />

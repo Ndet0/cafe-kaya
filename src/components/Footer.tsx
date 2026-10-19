@@ -1,6 +1,10 @@
 import { MapPin, Phone, Instagram, Facebook, Twitter } from "lucide-react";
+import { useContactDisplay } from "@/lib/contactDisplay";
 
-const Footer = () => (
+const Footer = () => {
+  const contact = useContactDisplay();
+
+  return (
   <footer className="bg-kaya-brown text-kaya-cream">
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
       <div className="grid md:grid-cols-3 gap-12">
@@ -11,9 +15,13 @@ const Footer = () => (
             Organic coffee, creative atmosphere, and sustainable living in the heart of Westlands, Nairobi.
           </p>
           <div className="flex gap-4 mt-6">
-            <a href="https://www.instagram.com/cafekaya254/" target="_blank" rel="noopener noreferrer" className="text-kaya-cream/50 hover:text-kaya-gold transition-colors"><Instagram className="w-5 h-5" /></a>
-            <a href="#" className="text-kaya-cream/50 hover:text-kaya-gold transition-colors"><Facebook className="w-5 h-5" /></a>
-            <a href="#" className="text-kaya-cream/50 hover:text-kaya-gold transition-colors"><Twitter className="w-5 h-5" /></a>
+            <a href={contact.instagramUrl} target="_blank" rel="noopener noreferrer" className="text-kaya-cream/50 hover:text-kaya-gold transition-colors"><Instagram className="w-5 h-5" /></a>
+            {contact.facebookUrl && (
+              <a href={contact.facebookUrl} target="_blank" rel="noopener noreferrer" className="text-kaya-cream/50 hover:text-kaya-gold transition-colors"><Facebook className="w-5 h-5" /></a>
+            )}
+            {contact.twitterUrl && (
+              <a href={contact.twitterUrl} target="_blank" rel="noopener noreferrer" className="text-kaya-cream/50 hover:text-kaya-gold transition-colors"><Twitter className="w-5 h-5" /></a>
+            )}
           </div>
         </div>
 
@@ -35,15 +43,16 @@ const Footer = () => (
           <div className="space-y-3 text-sm text-kaya-cream/60">
             <div className="flex items-start gap-2">
               <MapPin className="w-4 h-4 mt-0.5 shrink-0 text-kaya-gold" />
-              <span>Slip Road Off Waiyaki Way after Westlands Roundabout, Nairobi City, Kenya</span>
+              <span className="whitespace-pre-line">{contact.address}</span>
             </div>
             <div className="flex items-center gap-2">
               <Phone className="w-4 h-4 shrink-0 text-kaya-gold" />
-              <a href="tel:+254710767717" className="hover:text-kaya-gold transition-colors">+254 710 767717</a>
+              <a href={contact.phoneHref} className="hover:text-kaya-gold transition-colors">{contact.phone}</a>
             </div>
             <div className="mt-4 text-xs space-y-1">
-              <p>Sun: 9:00 AM – 9:30 PM</p>
-              <p>Mon–Sat: 9:00 AM – 10:00 PM</p>
+              {contact.hoursLines.map((line) => (
+                <p key={line}>{line}</p>
+              ))}
             </div>
           </div>
         </div>
@@ -53,7 +62,8 @@ const Footer = () => (
         © {new Date().getFullYear()} Cafe Kaya. All rights reserved.
       </div>
     </div>
-  </footer>
-);
+    </footer>
+  );
+};
 
 export default Footer;
